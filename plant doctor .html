@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#052e16">
+<meta name="description" content="Plant Doctor — responsive AI plant and leaf diagnosis system">
+<title>Plant Doctor — AI Leaf Diagnosis</title>
+
+<link rel="icon" href="gorge.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+<style>
+/* ================================================================
+   🌿 PLANT DOCTOR — EXACT ORIGINAL INTRO
+   ================================================================ */
+#pd-intro{position:fixed;inset:0;z-index:1000000;display:flex;align-items:center;justify-content:center;overflow:hidden;background:radial-gradient(circle at center,#164e2b 0,#041008 55%,#010402 100%);transition:opacity .8s,visibility .8s}
+#pd-intro.done{opacity:0;visibility:hidden;pointer-events:none}
+#pd-intro .intro-glow{position:absolute;width:260px;height:260px;border-radius:50%;background:#22c55e;filter:blur(80px);opacity:.25;animation:introGlow 2s ease-in-out infinite}
+#pd-intro .intro-ring{position:absolute;border:1px solid rgba(134,239,172,.2);border-radius:50%;animation:ringPulse 2.8s ease-in-out infinite}
+#pd-intro .intro-ring:nth-of-type(2){width:260px;height:260px}
+#pd-intro .intro-ring:nth-of-type(3){width:460px;height:460px;animation-delay:.35s}
+#pd-intro .intro-ring:nth-of-type(4){width:700px;height:700px;animation-delay:.7s}
+#pd-intro .intro-card{text-align:center;position:relative;z-index:2;animation:introIn 1s cubic-bezier(.2,.8,.2,1) both}
+#pd-intro .intro-logo-wrap{width:125px;height:125px;margin:auto;border-radius:34px;padding:8px;background:rgba(255,255,255,.08);border:1px solid rgba(134,239,172,.3);box-shadow:0 0 45px rgba(34,197,94,.3);animation:logoFloat 2.2s ease-in-out infinite}
+#pd-intro .intro-logo{width:100%;height:100%;object-fit:contain;border-radius:26px;animation:logoPulse 1.8s ease-in-out infinite}
+#pd-intro .intro-title{margin-top:22px;color:#fff;font-size:38px;font-weight:900;letter-spacing:-1px}
+#pd-intro .intro-sub{color:#bbf7d0;margin-top:7px;font-size:15px}
+#pd-intro .intro-bar{width:170px;height:4px;border-radius:9px;background:rgba(255,255,255,.15);margin:20px auto 0;overflow:hidden}
+#pd-intro .intro-bar:after{content:"";display:block;height:100%;width:45%;background:#4ade80;border-radius:9px;animation:bar 1.8s ease-in-out infinite}
+@keyframes introIn{from{opacity:0;transform:scale(.8) translateY(25px)}to{opacity:1;transform:none}}
+@keyframes logoFloat{50%{transform:translateY(-10px) rotate(1deg)}}
+@keyframes logoPulse{50%{filter:drop-shadow(0 0 18px rgba(74,222,128,.8))}}
+@keyframes introGlow{50%{transform:scale(1.25);opacity:.4}}
+@keyframes ringPulse{50%{transform:scale(1.08);opacity:.65}}
+@keyframes bar{50%{transform:translateX(120px)}}
+#pd-intro .intro-card,#pd-intro .intro-logo-wrap,#pd-intro .intro-logo,#pd-intro .intro-glow,#pd-intro .intro-ring{will-change:transform,opacity}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+/* ---------- THEME TOKENS ---------- */
+:root{
+  --green-900:#052e16; --green-800:#14532d; --green-700:#15803d;
+  --green-600:#16a34a; --green-500:#22c55e; --green-400:#4ade80;
+  --green-300:#86efac; --green-100:#dcfce7;
+}
+
+/* light */
+html[data-theme="light"]{
+  --page-bg:#eef6ee;
+  --page-glow:rgba(34,197,94,.14);
+  --surface:rgba(255,255,255,.90);
+  --surface-2:#ffffff;
+  --surface-3:#f8fafc;
+  --border:rgba(255,255,255,.7);
+  --line:#e2e8f0;
+  --text:#052e16;
+  --text-2:#334155;
+  --muted:#64748b;
+  --accent:var(--green-700);
+  --shadow:0 20px 60px rgba(0,50,10,.15);
+  --field-bg:#ffffff;
+}
+
+/* dark */
+html[data-theme="dark"]{
+  --page-bg:#020b05;
+  --page-glow:rgba(34,197,94,.12);
+  --surface:rgba(8,26,15,.82);
+  --surface-2:rgba(255,255,255,.04);
+  --surface-3:rgba(255,255,255,.03);
+  --border:rgba(74,222,128,.18);
+  --line:rgba(255,255,255,.09);
+  --text:#ecfdf5;
+  --text-2:#d1fae5;
+  --muted:#8aa79a;
+  --accent:var(--green-500);
+  --shadow:0 24px 70px rgba(0,0,0,.55);
+  --field-bg:rgba(255,255,255,.05);
+}
+
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+/* ================================================================
+   🌿 PLANT DOCTOR — ANIMATED INTRO
+================================================================ */
+#plant-intro{
+  position:fixed;
+  inset:0;
+  z-index:999999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(34,197,94,.18), transparent 32%),
+    linear-gradient(135deg,#020b05,#052e16,#020b05);
+  opacity:1;
+  visibility:visible;
+  transition:
+    opacity .8s ease,
+    visibility .8s ease;
+}
+
+#plant-intro.hide{
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+}
+
+.intro-content{
+  position:relative;
+  z-index:2;
+  text-align:center;
+  padding:30px;
+  animation:introContent .9s ease both;
+}
+
+.intro-logo{
+  width:110px;
+  height:110px;
+  margin:0 auto 24px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:55px;
+  background:
+    radial-gradient(circle at 35% 30%,#86efac,#22c55e 45%,#14532d 100%);
+  box-shadow:
+    0 0 0 8px rgba(34,197,94,.08),
+    0 0 45px rgba(34,197,94,.35),
+    0 20px 60px rgba(0,0,0,.45);
+  animation:
+    introLogo 2s ease-in-out infinite,
+    introLogoIn .8s ease both;
+}
+
+.intro-title{
+  color:#ecfdf5;
+  font-size:clamp(2rem,7vw,4rem);
+  font-weight:900;
+  letter-spacing:-.055em;
+  line-height:1;
+  text-shadow:0 0 30px rgba(74,222,128,.25);
+}
+
+.intro-subtitle{
+  margin-top:12px;
+  color:#a7f3d0;
+  font-size:clamp(.8rem,2vw,1rem);
+  font-weight:500;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  opacity:.85;
+}
+
+.intro-loader{
+  width:190px;
+  height:4px;
+  margin:30px auto 0;
+  overflow:hidden;
+  border-radius:20px;
+  background:rgba(255,255,255,.12);
+}
+
+.intro-loader-bar{
+  width:45%;
+  height:100%;
+  border-radius:20px;
+  background:linear-gradient(
+    90deg,
+    #16a34a,
+    #4ade80,
+    #86efac
+  );
+  animation:introLoading 1.2s ease-in-out infinite;
+}
+
+.intro-status{
+  margin-top:14px;
+  color:#8aa79a;
+  font-size:12px;
+  min-height:18px;
+}
+
+.intro-particles{
+  position:absolute;
+  inset:0;
+  overflow:hidden;
+  pointer-events:none;
+}
+
+.intro-particle{
+  position:absolute;
+  bottom:-30px;
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:#4ade80;
+  opacity:.35;
+  animation:introParticle linear infinite;
+}
+
+.intro-particle:nth-child(1){
+  left:8%;
+  animation-duration:5s;
+  animation-delay:.2s;
+}
+
+.intro-particle:nth-child(2){
+  left:20%;
+  width:4px;
+  height:4px;
+  animation-duration:7s;
+  animation-delay:1s;
+}
+
+.intro-particle:nth-child(3){
+  left:34%;
+  animation-duration:6s;
+  animation-delay:2s;
+}
+
+.intro-particle:nth-child(4){
+  left:52%;
+  width:5px;
+  height:5px;
+  animation-duration:8s;
+  animation-delay:.5s;
+}
+
+.intro-particle:nth-child(5){
+  left:68%;
+  animation-duration:5.5s;
+  animation-delay:1.5s;
+}
+
+.intro-particle:nth-child(6){
+  left:82%;
+  width:4px;
+  height:4px;
+  animation-duration:7.5s;
+  animation-delay:2.5s;
+}
+
+.intro-particle:nth-child(7){
+  left:92%;
+  animation-duration:6.5s;
+  animation-delay:1.2s;
+}
+
+@keyframes introContent{
+  from{
+    opacity:0;
+    transform:translateY(25px) scale(.94);
+  }
+  to{
+    opacity:1;
+    transform:translateY(0) scale(1);
+  }
+}
+
+@keyframes introLogoIn{
+  from{
+    opacity:0;
+    transform:scale(.5) rotate(-20deg);
+  }
+  to{
+    opacity:1;
+    transform:scale(1) rotate(0);
+  }
+}
+
+@keyframes introLogo{
+  0%,100%{
+    transform:translateY(0) rotate(0);
+  }
+  50%{
+    transform:translateY(-8px) rotate(3deg);
+  }
+}
+
+@keyframes introLoading{
+  0%{
+    transform:translateX(-180%);
+  }
+  50%{
+    transform:translateX(100%);
+  }
+  100%{
+    transform:translateX(280%);
+  }
+}
+
+@keyframes introParticle{
+  0%{
+    transform:translateY(0) scale(.6);
+    opacity:0;
+  }
+  15%{
+    opacity:.4;
+  }
+  80%{
+    opacity:.25;
+  }
+  100%{
+    transform:translateY(-110vh) scale(1.4);
+    opacity:0;
+  }
+}
+
+@media (max-width:640px){
+  .intro-logo{
+    width:90px;
+    height:90px;
+    font-size:44px;
+  }
+
+  .intro-subtitle{
+    letter-spacing:.12em;
+  }
+
+  .intro-loader{
+    width:160px;
+  }
+}
+
+@media (prefers-reduced-motion:reduce){
+  #plant-intro *,
+  #plant-intro{
+    animation:none!important;
+    transition:none!important;
+  }
+}
+body{
+  font-family:'Inter',sans-serif;
+  min-height:100vh;
+  overflow-x:hidden;
+  color:var(--text);
+  background:
+    radial-gradient(ellipse 70% 50% at 50% -10%, var(--page-glow) 0%, transparent 60%),
+    var(--page-bg);
+  background-attachment:fixed;
+  padding:28px 20px 60px;
+  transition:background-color .3s ease,color .3s ease;
+}
+
+img,video,canvas,svg{max-width:100%;height:auto}
+button,input,textarea{font:inherit;max-width:100%}
+button,a{-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:2px solid var(--green-500);outline-offset:2px}
+
+/* ---------- THEME SWITCH ---------- */
+.theme-switch{
+  position:fixed;top:16px;right:16px;z-index:9999;
+  display:inline-flex;align-items:center;gap:8px;
+  height:42px;padding:0 16px;
+  border:1px solid var(--border);
+  border-radius:50px;
+  background:var(--surface);
+  backdrop-filter:blur(16px);
+  color:var(--text);
+  font-size:13px;font-weight:600;
+  cursor:pointer;
+  box-shadow:var(--shadow);
+}
+.theme-switch:hover{filter:brightness(1.06)}
+.theme-switch .icon{font-size:15px;line-height:1}
+
+/* ---------- CARD ---------- */
+.app-box{
+  width:min(880px,100%);
+  margin:72px auto 0;
+  padding:36px;
+  border:1px solid var(--border);
+  border-radius:28px;
+  background:var(--surface);
+  backdrop-filter:blur(20px);
+  box-shadow:var(--shadow);
+}
+.box-title{font-size:clamp(1.7rem,4vw,2.4rem);font-weight:900;letter-spacing:-.04em}
+.box-sub{margin:6px 0 26px;color:var(--muted);font-size:.88rem}
+
+/* ---------- TOGGLES ---------- */
+.toggle-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.toggle-grid a{text-decoration:none;display:block}
+.toggle-btn{
+  width:100%;min-height:78px;border:0;border-radius:18px;
+  display:flex;align-items:center;justify-content:center;gap:12px;
+  font-weight:800;font-size:1rem;cursor:pointer;
+  transition:transform .2s,filter .2s;
+}
+.toggle-btn:hover{transform:translateY(-3px);filter:brightness(1.05)}
+.btn-online{color:#fff;background:linear-gradient(135deg,var(--green-700),var(--green-500));box-shadow:0 12px 28px rgba(22,163,74,.28)}
+.btn-offline{color:#7f1d1d;background:linear-gradient(135deg,#fef2f2,#fee2e2);border:1px solid #fecaca}
+html[data-theme="dark"] .btn-offline{color:#fecaca;background:linear-gradient(135deg,rgba(127,29,29,.35),rgba(153,27,27,.25));border-color:rgba(254,202,202,.25)}
+
+/* ---------- COMMENTS ---------- */
+.comment-section{margin-top:32px;padding-top:28px;border-top:1px solid var(--line)}
+.comment-section h3{font-size:1.1rem;font-weight:800;margin-bottom:4px}
+.comment-hint{color:var(--muted);font-size:.82rem;margin-bottom:16px}
+
+.comment-form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.comment-form input,.comment-form textarea{
+  width:100%;border:1.5px solid var(--line);border-radius:12px;padding:11px 14px;
+  outline:none;background:var(--field-bg);color:var(--text);
+  transition:border-color .2s,box-shadow .2s;
+  font-size:14px;line-height:1.4;
+}
+.comment-form input::placeholder,.comment-form textarea::placeholder{color:var(--muted)}
+.comment-form input:focus,.comment-form textarea:focus{border-color:var(--green-500);box-shadow:0 0 0 3px rgba(34,197,94,.15)}
+.comment-form textarea,.comment-submit,.form-note{grid-column:1/-1}
+.comment-form textarea{resize:vertical;min-height:84px}
+
+.remember-row{grid-column:1/-1;display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12.5px}
+.remember-row input{width:16px;height:16px;accent-color:var(--green-500);cursor:pointer}
+
+.comment-submit{
+  height:46px;border:0;border-radius:12px;background:var(--green-700);color:#fff;
+  font-weight:700;font-size:14px;cursor:pointer;transition:filter .2s,transform .15s;
+}
+.comment-submit:hover:not(:disabled){filter:brightness(1.1);transform:translateY(-1px)}
+.comment-submit:disabled{opacity:.6;cursor:wait}
+
+.form-note{min-height:18px;font-size:12.5px;color:var(--muted)}
+.form-note.error{color:#f87171}
+.form-note.ok{color:var(--green-500)}
+
+.comment-list{margin-top:18px;max-height:380px;overflow:auto;padding-right:4px}
+.comment-empty{color:var(--muted);font-size:.88rem;padding:14px 0}
+
+.comment-card{
+  position:relative;padding:14px 46px 14px 14px;margin-bottom:10px;
+  border:1px solid var(--line);border-radius:14px;background:var(--surface-2);
+}
+.comment-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.comment-author{font-weight:800;color:var(--accent)}
+.comment-time{color:var(--muted);font-size:.75rem}
+.comment-body{color:var(--text-2);line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
+
+.comment-menu{position:absolute;top:10px;right:10px}
+.comment-menu-btn{width:32px;height:32px;border:0;border-radius:9px;background:var(--surface-3);color:var(--muted);cursor:pointer;font-size:18px;line-height:1}
+.comment-menu-list{display:none;position:absolute;right:0;top:36px;z-index:5;min-width:112px;padding:5px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.25)}
+html[data-theme="dark"] .comment-menu-list{background:#0d2417}
+.comment-menu.open .comment-menu-list{display:block}
+.comment-menu-list button{display:block;width:100%;padding:8px 10px;border:0;border-radius:7px;background:transparent;text-align:left;cursor:pointer;font-size:12px;font-weight:600;color:var(--text-2)}
+.comment-menu-list button:hover{background:var(--surface-3)}
+.comment-menu-list .comment-delete{color:#ef4444}
+
+.db-status{margin-top:12px;font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:7px}
+.db-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex-shrink:0}
+.db-dot.on{background:var(--green-500)}
+.db-dot.off{background:#f59e0b}
+
+@media (max-width:640px){
+  body{padding:20px 12px 40px}
+  .app-box{margin-top:70px;padding:22px 18px;border-radius:22px}
+  .toggle-grid,.comment-form{grid-template-columns:1fr}
+  .comment-form textarea,.comment-submit,.form-note,.remember-row{grid-column:auto}
+}
+@media (min-width:1600px){.app-box{max-width:1100px}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+</style>
+</head>
+<body>
+<div id="pd-intro"><div class="intro-glow"></div><div class="intro-ring"></div><div class="intro-ring"></div><div class="intro-ring"></div><div class="intro-card"><div class="intro-logo-wrap"><img src="gorge.png" class="intro-logo" alt="Plant Doctor"></div><h1 class="intro-title">Plant Doctor</h1><p class="intro-sub">AI Leaf Diagnosis</p><div class="intro-bar"></div></div></div>
+
+
+<button class="theme-switch" id="theme-switch" type="button" aria-label="Switch theme">
+  <span class="icon" id="theme-icon">🌙</span><span id="theme-label">Dark</span>
+</button>
+
+<div class="app-box">
+  <h1 class="box-title">System Status</h1>
+  <p class="box-sub">Toggle diagnostic engine connectivity</p>
+
+  <div class="toggle-grid">
+    <a href="Plant online.html">
+      <button class="toggle-btn btn-online"><span style="font-size:1.2rem">🟢</span><span>Go Online</span></button>
+    </a>
+    <a href="offline plant doc.html">
+      <button class="toggle-btn btn-offline"><span style="font-size:1.2rem">🔴</span><span>Go Offline</span></button>
+    </a>
+  </div>
+
+  <div class="comment-section">
+    <h3>Leave a comment</h3>
+    <p class="comment-hint">Tell us your name and email so you can edit or delete what you post later.</p>
+
+    <form id="comment-form" class="comment-form" autocomplete="on">
+      <input id="comment-username" type="text" name="name" placeholder="Your name" maxlength="60" required>
+      <input id="comment-email" type="email" name="email" placeholder="you@example.com" maxlength="120" required>
+      <textarea id="comment-text" placeholder="How did the diagnosis go?" rows="3" maxlength="1200" required></textarea>
+      <label class="remember-row"><input type="checkbox" id="remember-me" checked> Remember me on this device</label>
+      <button type="submit" class="comment-submit" id="comment-submit">Post comment</button>
+      <p class="form-note" id="form-note"></p>
+    </form>
+
+    <div id="comment-list" class="comment-list"></div>
+
+    <p class="db-status"><span class="db-dot" id="db-dot"></span><span id="db-text">Connecting to database…</span></p>
+  </div>
+</div>
+
+<script>
+/* ================================================================
+   THEME
+================================================================ */
+(() => {
+  const root = document.documentElement;
+  const btn = document.getElementById("theme-switch");
+  const icon = document.getElementById("theme-icon");
+  const label = document.getElementById("theme-label");
+  const meta = document.querySelector('meta[name="theme-color"]');
+
+  const saved = (() => { try { return localStorage.getItem("pd-theme"); } catch(_) { return null; } })();
+  const start = saved || (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+  apply(start);
+
+  function apply(theme){
+    root.setAttribute("data-theme", theme);
+    icon.textContent = theme === "dark" ? "🌙" : "☀️";
+    label.textContent = theme === "dark" ? "Dark" : "Light";
+    if (meta) meta.setAttribute("content", theme === "dark" ? "#020b05" : "#eef6ee");
+    try { localStorage.setItem("pd-theme", theme); } catch(_) {}
+  }
+
+  btn.addEventListener("click", () => {
+    apply(root.getAttribute("data-theme") === "dark" ? "light" : "dark");
+  });
+})();
+
+/* ================================================================
+   TURSO DATABASE
+   WARNING: this token is visible to anyone who opens this page.
+   Rotate it when you're done, or move these calls behind a server.
+================================================================ */
+const TURSO_URL = "https://idk-soysa-dt.aws-ap-south-1.turso.io/v2/pipeline";
+const TURSO_KEY = "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJnaWQiOiIxMTliZWIwNy02NmE5LTRiYzYtYjNmMi03YzNiNGI5ODg3YjAiLCJpYXQiOjE3ODk2NjQzOTksImtpZCI6IlNkc0Rrb0lMY25NTkhfTDlLbjJ4cXRlaElZeElvMTR4N2dwZ2s0aW16MFUiLCJyaWQiOiIzMzAzNDY3Zi05YjhlLTQ3NDItYTVmNi03MjJlZWQ4MzI3NzkifQ.F0040FypMAmZbc04-lQsEQPS5A9CNLCD5TJJXEIxgpvpWWe36gMJQ4vTt-UPlB6V0O0fZCBsHDmOC_4Z8BkiDg";
+
+function toArg(v){
+  if (v === null || v === undefined) return { type:"null" };
+  if (typeof v === "number") return { type:"integer", value:String(Math.trunc(v)) };
+  return { type:"text", value:String(v) };
+}
+
+/* Runs one or more SQL statements, returns rows of the LAST one. */
+async function tursoRun(statements){
+  const requests = statements.map(s => ({
+    type:"execute",
+    stmt:{ sql:s.sql, args:(s.args || []).map(toArg) }
+  }));
+  requests.push({ type:"close" });
+
+  const res = await fetch(TURSO_URL, {
+    method:"POST",
+    headers:{ "Content-Type":"application/json", "Authorization":"Bearer " + TURSO_KEY },
+    body: JSON.stringify({ requests })
+  });
+
+  if (!res.ok) throw new Error("Database returned HTTP " + res.status);
+  const data = await res.json();
+
+  const results = (data.results || []).filter(r => r.type !== undefined);
+  for (const r of results){
+    if (r.type === "error") throw new Error(r.error?.message || "SQL error");
+  }
+
+  const execs = results.filter(r => r.response?.type === "execute");
+  const last = execs[execs.length - 1];
+  if (!last) return [];
+
+  const out = last.response.result;
+  const cols = out.cols.map(c => c.name);
+  return out.rows.map(row => {
+    const obj = {};
+    row.forEach((cell, i) => { obj[cols[i]] = cell.type === "null" ? null : cell.value; });
+    return obj;
+  });
+}
+
+const SCHEMA = `CREATE TABLE IF NOT EXISTS comments (
+  id TEXT PRIMARY KEY,
+  username TEXT NOT NULL,
+  email TEXT NOT NULL,
+  body TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  edited_at INTEGER
+)`;
+
+/* ================================================================
+   COMMENTS
+================================================================ */
+(() => {
+  const form = document.getElementById("comment-form");
+  const nameInput = document.getElementById("comment-username");
+  const emailInput = document.getElementById("comment-email");
+  const textInput = document.getElementById("comment-text");
+  const remember = document.getElementById("remember-me");
+  const submit = document.getElementById("comment-submit");
+  const note = document.getElementById("form-note");
+  const list = document.getElementById("comment-list");
+  const dot = document.getElementById("db-dot");
+  const dbText = document.getElementById("db-text");
+
+  const LOCAL_KEY = "pd-comments-cache";
+  const ME_KEY = "pd-comment-identity";
+
+  let online = false;
+  let comments = [];
+
+  /* ---- helpers ---- */
+  const esc = v => String(v ?? "").replace(/[&<>'"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
+  const norm = e => String(e || "").trim().toLowerCase();
+  const me = () => norm(emailInput.value);
+
+  const readCache = () => { try { const r = JSON.parse(localStorage.getItem(LOCAL_KEY) || "[]"); return Array.isArray(r) ? r : []; } catch(_) { return []; } };
+  const writeCache = c => { try { localStorage.setItem(LOCAL_KEY, JSON.stringify(c)); } catch(_) {} };
+
+  function setStatus(state, message){
+    dot.className = "db-dot " + state;
+    dbText.textContent = message;
+  }
+
+  function say(message, kind){
+    note.textContent = message;
+    note.className = "form-note" + (kind ? " " + kind : "");
+  }
+
+  function when(ts){
+    const n = Number(ts);
+    if (!n) return "";
+    try { return new Date(n).toLocaleString([], { dateStyle:"medium", timeStyle:"short" }); }
+    catch(_) { return ""; }
+  }
+
+  function loadIdentity(){
+    try {
+      const saved = JSON.parse(localStorage.getItem(ME_KEY) || "null");
+      if (saved){
+        nameInput.value = saved.username || "";
+        emailInput.value = saved.email || "";
+      }
+    } catch(_) {}
+  }
+
+  function saveIdentity(username, email){
+    try {
+      if (remember.checked) localStorage.setItem(ME_KEY, JSON.stringify({ username, email }));
+      else localStorage.removeItem(ME_KEY);
+    } catch(_) {}
+  }
+
+  /* ---- data ---- */
+  async function fetchComments(){
+    const rows = await tursoRun([
+      { sql: SCHEMA },
+      { sql: "SELECT id, username, email, body, created_at, edited_at FROM comments ORDER BY created_at DESC LIMIT 200" }
+    ]);
+    return rows;
+  }
+
+  async function refresh(){
+    try {
+      comments = await fetchComments();
+      online = true;
+      writeCache(comments);
+      setStatus("on", "Comments synced with your Turso database.");
+    } catch (err) {
+      online = false;
+      comments = readCache();
+      setStatus("off", "Database unreachable — showing a local copy. " + err.message);
+    }
+    render();
+  }
+
+  function render(){
+    list.innerHTML = "";
+
+    if (!comments.length){
+      const empty = document.createElement("div");
+      empty.className = "comment-empty";
+      empty.textContent = "No comments yet. Be the first to leave one.";
+      list.appendChild(empty);
+      return;
+    }
+
+    comments.forEach(c => {
+      const mine = me() && norm(c.email) === me();
+      const card = document.createElement("article");
+      card.className = "comment-card";
+      card.dataset.id = c.id;
+      card.innerHTML = `
+        <div class="comment-meta">
+          <span class="comment-author">${esc(c.username)}</span>
+          <span class="comment-time">${esc(when(c.created_at))}${c.edited_at ? " · edited" : ""}</span>
+        </div>
+        <div class="comment-body">${esc(c.body)}</div>
+        ${mine ? `
+        <div class="comment-menu">
+          <button type="button" class="comment-menu-btn" aria-label="Comment options">⋮</button>
+          <div class="comment-menu-list">
+            <button type="button" data-action="edit">Edit</button>
+            <button type="button" class="comment-delete" data-action="delete">Delete</button>
+          </div>
+        </div>` : ""}
+      `;
+      list.appendChild(card);
+    });
+  }
+
+  /* ---- post ---- */
+  form.addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const username = nameInput.value.trim();
+    const email = emailInput.value.trim();
+    const body = textInput.value.trim();
+
+    if (!username || !email || !body) return;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+      say("That email address doesn't look right.", "error");
+      emailInput.focus();
+      return;
+    }
+
+    submit.disabled = true;
+    submit.textContent = "Posting…";
+    say("");
+
+    const row = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
+      username, email, body,
+      created_at: Date.now(),
+      edited_at: null
+    };
+
+    try {
+      await tursoRun([
+        { sql: SCHEMA },
+        { sql: "INSERT INTO comments (id, username, email, body, created_at) VALUES (?, ?, ?, ?, ?)",
+          args: [row.id, row.username, row.email, row.body, row.created_at] }
+      ]);
+      textInput.value = "";
+      saveIdentity(username, email);
+      say("Comment posted.", "ok");
+      await refresh();
+    } catch (err) {
+      comments.unshift(row);
+      writeCache(comments);
+      render();
+      textInput.value = "";
+      saveIdentity(username, email);
+      say("Saved on this device only — the database didn't accept it: " + err.message, "error");
+    } finally {
+      submit.disabled = false;
+      submit.textContent = "Post comment";
+    }
+  });
+
+  /* ---- edit / delete ---- */
+  list.addEventListener("click", async event => {
+    const menuBtn = event.target.closest(".comment-menu-btn");
+    if (menuBtn){
+      event.stopPropagation();
+      const menu = menuBtn.closest(".comment-menu");
+      document.querySelectorAll(".comment-menu.open").forEach(m => { if (m !== menu) m.classList.remove("open"); });
+      menu.classList.toggle("open");
+      return;
+    }
+
+    const action = event.target.closest("[data-action]");
+    if (!action) return;
+
+    const id = action.closest(".comment-card")?.dataset.id;
+    const target = comments.find(c => c.id === id);
+    if (!target || norm(target.email) !== me()) return;
+
+    if (action.dataset.action === "delete"){
+      if (!confirm("Delete your comment?")) return;
+      try {
+        await tursoRun([{ sql:"DELETE FROM comments WHERE id = ? AND lower(email) = ?", args:[id, me()] }]);
+        say("Comment deleted.", "ok");
+        await refresh();
+      } catch (err) {
+        comments = comments.filter(c => c.id !== id);
+        writeCache(comments);
+        render();
+        say("Removed locally — database error: " + err.message, "error");
+      }
+      return;
+    }
+
+    const updated = prompt("Edit your comment:", target.body);
+    if (updated === null) return;
+    const clean = updated.trim();
+    if (!clean) return;
+
+    try {
+      await tursoRun([{ sql:"UPDATE comments SET body = ?, edited_at = ? WHERE id = ? AND lower(email) = ?",
+                        args:[clean, Date.now(), id, me()] }]);
+      say("Comment updated.", "ok");
+      await refresh();
+    } catch (err) {
+      target.body = clean;
+      target.edited_at = Date.now();
+      writeCache(comments);
+      render();
+      say("Updated locally — database error: " + err.message, "error");
+    }
+  });
+
+  document.addEventListener("click", () => {
+    document.querySelectorAll(".comment-menu.open").forEach(m => m.classList.remove("open"));
+  });
+
+  /* re-render so the ⋮ menu appears on your own comments as you type your email */
+  emailInput.addEventListener("input", render);
+
+  loadIdentity();
+  refresh();
+})();
+</script>
+
+<script>
+(() => {
+  const intro = document.getElementById("pd-intro");
+  if (!intro) return;
+  window.setTimeout(() => intro.classList.add("done"), 3200);
+})();
+</script>
+</body>
+</html>
