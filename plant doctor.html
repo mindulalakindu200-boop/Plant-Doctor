@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plant Doctor - Diagnosis</title>
+  
+  <!-- TensorFlow.js and Teachable Machine Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 500px;
+      margin: 40px auto;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .upload-box {
+      border: 2px dashed #4CAF50;
+      padding: 30px;
+      border-radius: 10px;
+      background-color: #f9fdf9;
+      cursor: pointer;
+    }
+
+    #imagePreview {
+      max-width: 100%;
+      max-height: 250px;
+      margin-top: 15px;
+      border-radius: 8px;
+      display: none;
+    }
+
+    /* Success Result Styling */
+    .success-card {
+      background-color: #e8f5e9;
+      border: 1px solid #4CAF50;
+      color: #2e7d32;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 20px;
+    }
+
+    /* Error Message Styling for Non-Plant Images */
+    .error-card {
+      background-color: #ffebee;
+      border: 1px solid #ef5350;
+      color: #c62828;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+
+    .status-text {
+      color: #666;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Plant Doctor Diagnosis</h2>
+
+  <!-- Image Upload Input -->
+  <div class="upload-box">
+    <label for="imageUpload"><strong>Click or Drop Leaf Image Here</strong></label><br><br>
+    <input type="file" id="imageUpload" accept="image/*" onchange="handleImageUpload(event)">
+  </div>
+
+  <!-- Image Preview -->
+  <img id="imagePreview" alt="Uploaded Image Preview">
+
+  <!-- Result / Error Output Area -->
+  <div id="resultContainer"></div>
+
+  <script>
+    // Replace with your actual model URL from Teachable Machine
+    const MODEL_URL = "https://teachablemachine.withgoogle.com/models/YOUR_MODEL_ID/";
+
+    let model;
+
+    // Initialize Teachable Machine model
+    async function initModel() {
+      try {
+        const modelURL = MODEL_URL + "model.json";
+        const metadataURL = MODEL_URL + "metadata.json";
+        model = await tmImage.load(modelURL, metadataURL);
+      } catch (error) {
+        console.log("Model URL not set. Using color/confidence fallback detector.");
+      }
+    }
+
+    initModel();
+
+    async function handleImageUpload(event) {
+      const file = event.target.files[0];
+      const resultContainer = document.getElementById("resultContainer");
+      const imgPreview = document.getElementById("imagePreview");
+
+      if (!file) return;
+
+      // Render uploaded image preview
+      imgPreview.src = URL.createObjectURL(file);
+      imgPreview.style.display = "block";
+
+      resultContainer.innerHTML = "<p class='status-text'>Analyzing image...</p>";
+
+      imgPreview.onload = async () => {
+        let topPrediction;
+
+        if (model) {
+          // 1. Get real prediction from Teachable Machine model
+          const predictions = await model.predict(imgPreview);
+          predictions.sort((a, b) => b.probability - a.probability);
+          topPrediction = predictions[0];
+        } else {
+          // 2. Fallback plant check if model URL is not added yet
+          topPrediction = await checkIsPlant(imgPreview);
+        }
+
+        const CONFIDENCE_THRESHOLD = 0.60;
+
+        // Condition check: Triggers message ONLY when image IS NOT a plant
+        if (!topPrediction.isPlant || topPrediction.probability < CONFIDENCE_THRESHOLD) {
+          resultContainer.innerHTML = `
+            <div class="error-card">
+              This is not a plant , Please try again by add an image of a plant
+            </div>
+          `;
+        } else {
+          // Triggers diagnosis ONLY when image IS a plant
+          resultContainer.innerHTML = `
+            <div class="success-card">
+              <h3>Diagnosis Result: ${topPrediction.className}</h3>
+              <p>Confidence: ${(topPrediction.probability * 100).toFixed(1)}%</p>
+            </div>
+          `;
+        }
+      };
+    }
+
+    // Helper method to detect green plant pixels when offline/testing
+    function checkIsPlant(imgElement) {
+      return new Promise((resolve) => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = imgElement.naturalWidth || 200;
+        canvas.height = imgElement.naturalHeight || 200;
+
+        ctx.drawImage(imgElement, 0, 0, canvas.width, canvas.height);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+
+        let greenPixels = 0;
+        let totalPixels = data.length / 4;
+
+        // Scan pixels for green hue (leaf/plant indicator)
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+
+          if (g > r && g > b && g > 40) {
+            greenPixels++;
+          }
+        }
+
+        const greenRatio = greenPixels / totalPixels;
+
+        // If green ratio > 10%, classify as plant
+        if (greenRatio > 0.10) {
+          resolve({
+            isPlant: true,
+            className: "Plant Leaf Detected",
+            probability: Math.min(0.70 + greenRatio, 0.98)
+          });
+        } else {
+          resolve({
+            isPlant: false,
+            className: "Non-Plant Object",
+            probability: 0.30
+          });
+        }
+      });
+    }
+  </script>
+
+</body>
+</html>

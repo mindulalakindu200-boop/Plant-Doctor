@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plant Doctor — AI Diagnosis</title>
+<link rel="icon" href="gorge.png">
+<link rel="stylesheet" href="plant.css">
+
+</head>
+<body>
+
+<div class="app">
+  <!-- LEFT -->
+  <div class="left">
+    <div class="topbar">
+      <div class="brand-icon">🌱</div>
+      <div class="brand"><h1>PLANT DOCTOR</h1></div>
+      <button class="theme-btn" id="themeBtn" title="Toggle dark mode">🌙</button>
+    </div>
+
+    <div class="scan-title">Nature Health Care Service</div>
+
+    <div class="chips">
+      <button class="chip" data-crop="chilli">🌶️ Chilli</button>
+      <button class="chip" data-crop="potato">🥔 Potato</button>
+      <button class="chip" data-crop="tomato">🍅 Tomato</button>
+      <button class="chip" data-crop="bell pepper">🫑Bell Pepper</button>
+      <button class="chip active" data-crop="other">🔍 Other (auto-detect)</button>
+       <a href="offline plant doc.html">
+<button class="chip active" data-crop="offline">Go offline! 🔴</button>
+</a>
+    </div>
+    <p id="ok"></p>
+    <div class="model-row">
+      Active model:
+      <span class="model-pill"><span class="dot" id="modelDot"></span><span id="modelName">resolving…</span></span>
+    </div>
+
+    <div class="dropzone" id="dropzone">
+      <div class="dz-icon">☁</div>
+      <div class="dz-main">Drag &amp; drop leaf photo here</div>
+      <div class="dz-sub">PNG, JPG, JPEG, WEBP — or paste with Ctrl+V</div>
+      <div class="dz-actions">
+        <button class="mini-btn" type="button" id="browseBtn">📁 Browse File</button>
+        <button class="mini-btn" type="button" id="cameraBtn">📷 Use Camera</button>
+      </div>
+      <input type="file" id="fileInput" accept="image/*" hidden>
+      <input type="file" id="cameraInput" accept="image/*" capture="environment" hidden>
+    </div>
+
+    <button class="diagnose-btn" id="diagnoseBtn" disabled>🩺 Diagnose Plant</button>
+
+    <div class="history-head">
+      <h4>🕘 Recent Scans</h4>
+      <button class="clear-hist" id="clearHist">Clear</button>
+    </div>
+    <div class="history-row" id="historyRow"><div class="empty-hist">No scans yet — your last 8 diagnoses will appear here.</div></div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- RIGHT -->
+  <div class="right">
+    <h2>Diagnosis Result</h2>
+    <div class="preview-box" id="previewBox">
+      <div class="ph-icon">🍃</div>
+      <div>No image uploaded yet</div>
+    </div>
+    <div id="result">
+      <div class="placeholder-text">Upload an image, then press<br><b>🩺 Diagnose Plant</b></div>
+    </div>
+    <div class="footer">Powered by Google Gemini Flash Lite</div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="PLANT.JS"></script>
+
+</body>
+</html>

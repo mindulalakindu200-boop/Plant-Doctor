@@ -1,0 +1,74 @@
+ @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: rgb(201, 248, 201);
+            min-height: 100vh;
+            background-image: url('rart.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+
+        .drop-zone--over {
+            border-color: darkgreen !important;
+            background-color: lightgreen !important;
+        }
+
+        .progress-bar-fill {
+            transition: width 0.5s ease-in-out, background-color 0.3s ease;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: goldenrod;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgb(255, 203, 71);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgb(255, 223, 142);
+        }
+
+        .costom-btn {
+            background-color: rgb(40, 157, 196);
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 12px 24px;
+            min-width: 120px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .custom-btn:hover {
+            background-color: orange;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .custom-btn:active {
+            transform: translateY(0);
+        }
+
+        p {
+            font-size: 20px;
+            color: #0056b3;
+        }
+        h1 {
+            color: rgb(0, 83, 0);
+        }
+        button {
+            color: orange;
+        }
+        span {
+            color: green;
+        }

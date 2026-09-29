@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pure HTML Auth</title>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+  <h2>Simple Login System</h2>
+
+  <!-- Google Sign-In Container with FedCM error fix -->
+  <div id="g_id_onload"
+       data-client_id="59709282073-tbgo6dq3p1fplmvk83p7455e1g71godr.apps.googleusercontent.com"
+       data-callback="handleCredentialResponse"
+       data-use_fedcm_for_prompt="false">
+  </div>
+  <div class="g_id_signin" data-type="standard" data-theme="outline"></div>
+
+  <br><hr><br>
+
+  <!-- Manual Email / Password Form Inputs -->
+  <input type="email" id="email" placeholder="Email" required><br><br>
+  <input type="password" id="password" placeholder="Password" required><br><br>
+  
+  <button onclick="handleAuth('signup')">Sign Up</button>
+  <button onclick="handleAuth('logIn')">Log In</button>
+  <p id="status"></p>
+
+  <script>
+    const TURSO_URL = "https://idk-soysa-dt.aws-ap-south-1.turso.io/v2/pipeline";
+    const TURSO_TOKEN = "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJnaWQiOiIxMTliZWIwNy02NmE5LTRiYzYtYjNmMi03YzNiNGI5ODg3YjAiLCJpYXQiOjE3ODk2NjQzOTksImtpZCI6IlNkc0Rrb0lMY25NTkhfTDlLbjJ4cXRlaElZeElvMTR4N2dwZ2s0aW16MFUiLCJyaWQiOiIzMzAzNDY3Zi05YjhlLTQ3NDItYTVmNi03MjJlZWQ4MzI3NzkifQ.F0040FypMAmZbc04-lQsEQPS5A9CNLCD5TJJXEIxgpvpWWe36gMJQ4vTt-UPlB6V0O0fZCBsHDmOC_4Z8BkiDg";
+
+    // 1. Manual Email/Password Authentication Handler (Fixes ReferenceError)
+    window.handleAuth = async function(type) {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const statusEl = document.getElementById("status");
+
+      if (!email || !password) {
+        statusEl.innerText = "Please fill in both email and password.";
+        return;
+      }
+
+      try {
+        if (type === 'signup') {
+          // Check if user exists
+          const checkRes = await fetch(TURSO_URL, {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${TURSO_TOKEN}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              requests: [
+                { type: "execute", stmt: { sql: "SELECT * FROM users WHERE email = ?;", args: [{ type: "text", value: email }] } },
+                { type: "close" }
+              ]
+            })
+          });
+          const checkData = await checkRes.json();
+          if (checkData.results[0].response.result.rows.length > 0) {
+            statusEl.innerText = "Email already registered!";
+            return;
+          }
+
+          // Register new user
+          await fetch(TURSO_URL, {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${TURSO_TOKEN}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              requests: [
+                { type: "execute", stmt: { sql: "INSERT INTO users (username, email, password) VALUES (?, ?, ?);", args: [{ type: "text", value: email.split('@')[0] }, { type: "text", value: email }, { type: "text", value: password }] } },
+                { type: "close" }
+              ]
+            })
+          });
+          statusEl.innerText = "Signup successful! You can now log in.";
+        } else {
+          // Log in check
+          const res = await fetch(TURSO_URL, {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${TURSO_TOKEN}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              requests: [
+                { type: "execute", stmt: { sql: "SELECT * FROM users WHERE email = ? AND password = ?;", args: [{ type: "text", value: email }, { type: "text", value: password }] } },
+                { type: "close" }
+              ]
+            })
+          });
+          const data = await res.json();
+          const rows = data.results[0].response.result.rows;
+
+          if (rows.length > 0) {
+            localStorage.setItem("loggedInUser", JSON.stringify({ name: rows[0][1] || email, email }));
+            statusEl.innerText = "Logged in successfully!";
+            alert(`Welcome back, ${email}!`);
+          } else {
+            statusEl.innerText = "Invalid email or password.";
+          }
+        }
+      } catch (err) {
+        console.error("Auth error:", err);
+        statusEl.innerText = "An error occurred during authentication.";
+      }
+    };
+
+    // 2. Google Sign-In Token Decoder
+    function parseJwt(token) {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+      return JSON.parse(jsonPayload);
+    }
+
+    // 3. Google Sign-In Response Handler (Exposed globally)
+    window.handleCredentialResponse = async function(response) {
+      const user = parseJwt(response.credential);
+      const email = user.email;
+      const name = user.name;
+      const googleId = user.sub;
+
+      try {
+        const checkRes = await fetch(TURSO_URL, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${TURSO_TOKEN}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            requests: [
+              {
+                type: "execute",
+                stmt: {
+                  sql: "SELECT * FROM users WHERE email = ?;",
+                  args: [{ type: "text", value: email }]
+                }
+              },
+              { type: "close" }
+            ]
+          })
+        });
+
+        const checkData = await checkRes.json();
+        const existingUsers = checkData.results[0].response.result.rows;
+
+        if (existingUsers.length === 0) {
+          await fetch(TURSO_URL, {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${TURSO_TOKEN}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              requests: [
+                {
+                  type: "execute",
+                  stmt: {
+                    sql: "INSERT INTO users (username, email, password) VALUES (?, ?, ?);",
+                    args: [
+                      { type: "text", value: name },
+                      { type: "text", value: email },
+                      { type: "text", value: `google_oauth_${googleId}` }
+                    ]
+                  }
+                },
+                { type: "close" }
+              ]
+            })
+          });
+        }
+
+        localStorage.setItem("loggedInUser", JSON.stringify({ name, email }));
+        alert(`Welcome, ${name}!`);
+        
+      } catch (err) {
+        console.error("Google login failed:", err);
+      }
+    };
+  </script>
+</body>
+</html>

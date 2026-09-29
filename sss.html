@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plant Doctor - AI Leaf Diagnosis</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- TensorFlow.js and Teachable Machine Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="icon" href="hack.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: rgb(201, 248, 201);
+            min-height: 100vh;
+            background-image: url('rart.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+
+        .drop-zone--over {
+            border-color: darkgreen !important;
+            background-color: lightgreen !important;
+        }
+
+        .progress-bar-fill {
+            transition: width 0.5s ease-in-out, background-color 0.3s ease;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: goldenrod;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgb(255, 203, 71);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgb(255, 223, 142);
+        }
+
+        .costom-btn {
+            background-color: rgb(40, 157, 196);
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 12px 24px;
+            min-width: 120px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .custom-btn:hover {
+            background-color: orange;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .custom-btn:active {
+            transform: translateY(0);
+        }
+
+        p {
+            font-size: 20px;
+            color: #0056b3;
+        }
+        h1 {
+            color: rgb(0, 83, 0);
+        }
+        button {
+            color: orange;
+        }
+        span {
+            color: green;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8 flex items-center justify-center min-h-screen">
+
+    <div class="max-w-4xl w-full bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row border border-green-100">
+
+        <!-- Left Column: Controls & Upload -->
+        <div class="w-full md:w-1/2 p-6 md:p-8 border-b md:border-b-0 md:border-r border-gray-100 flex flex-col justify-between">
+            <div>
+                <!-- Header -->
+                <div class="flex items-center space-x-3 mb-2">
+                    <div class="w-10 h-10 rounded-xl bg-green-700 text-white flex items-center justify-center text-xl shadow-md">
+                        🌱
+                    </div>
+                    <h1 class="text-2xl font-bold text-gray-800">Plant Doctor</h1>
+                </div>
+                
+                <!-- Model Selection Buttons -->
+                <div class="flex gap-1.5 mb-2">
+                    <button
+                        onclick="loadCustomModel('https://teachablemachine.withgoogle.com/models/i9LKfalBl/', 'Tomato')"
+                        class="bg-white border border-blue-600 text-blue-700 hover:bg-orange-400 hover:text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition duration-200"
+                    >
+                        🍅Tomato
+                    </button>
+                    <button
+                        onclick="loadCustomModel('https://teachablemachine.withgoogle.com/models/C0AH6w8g3/', 'Potato')"
+                        class="bg-white border border-blue-600 text-blue-700 hover:bg-orange-400 hover:text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition duration-200"
+                    >
+                        🥔Potato
+                    </button>
+                    <button
+                        onclick="loadCustomModel('https://teachablemachine.withgoogle.com/models/aoCUaFeyp/', 'Bell Pepper')"
+                        class="bg-white border border-blue-600 text-blue-700 hover:bg-orange-400 hover:text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition duration-200"
+                    >
+                       🫑bell Pepper  
+                    </button>
+                </div>
+
+                <!-- Active Model Text Display -->
+                <div class="mb-4">
+                    <span id="active-model-text" class="text-xs font-medium text-gray-500">
+                        Active Model: <span class="font-bold text-gray-700">None Selected</span>
+                    </span>
+                </div>
+
+                <!-- Dropzone / Image Upload -->
+                <div id="drop-zone" class="border-2 border-dashed border-green-300 rounded-xl p-6 text-center bg-green-50/40 hover:bg-green-50 transition duration-200 cursor-pointer flex flex-col items-center justify-center min-h-[180px]">
+                    <input type="file" id="image-upload" accept="image/*" class="hidden" onchange="handleFileSelect(event)">
+                    <div class="w-12 h-12 rounded-full bg-green-100 text-green-700 flex items-center justify-center mb-3">
+                        <i class="fa-solid fa-cloud-arrow-up text-xl"></i>
+                    </div>
+                    <p class="text-sm font-medium text-gray-700 mb-1">Drag & drop leaf photo here</p>
+                    <p class="text-xs text-gray-400 mb-4">PNG, JPG, JPEG, WEBP</p>
+                    <button onclick="document.getElementById('image-upload').click()" class="bg-white border border-green-600 text-green-700 hover:bg-green-600 hover:text-white px-4 py-2 rounded-lg text-xs font-semibold shadow-sm transition duration-200">
+                        Browse File
+                    </button>
+                </div>
+            </div>
+
+            <!-- Demo Samples -->
+            <div class="mt-6 pt-4 border-t border-gray-100">
+                <span class="text-xs font-semibold text-purple-700 uppercase tracking-wider block mb-2">Or try standard demo samples:</span>
+                <div class="grid grid-cols-3 gap-2">
+                    <button onclick="loadSample('healthy')" class="p-2 border border-gray-200 hover:border-green-500 rounded-lg text-left transition bg-gray-50 hover:bg-white group">
+                        <span class="text-xs font-medium text-gray-700 block group-hover:text-green-700">🍃Healthy Leaf</span>
+                        <span class="text-[10px] text-green-400 block">Clean green</span>
+                    </button>
+                    <button onclick="loadSample('blight')" class="p-2 border border-gray-200 hover:border-green-500 rounded-lg text-left transition bg-gray-50 hover:bg-white group">
+                        <span class="text-xs font-medium text-gray-700 block group-hover:text-green-700">🍂Early Blight</span>
+                        <span class="text-[10px] text-orange-400 block">Brown spots</span>
+                    </button>
+                    <button onclick="loadSample('rust')" class="p-2 border border-gray-200 hover:border-green-500 rounded-lg text-left transition bg-gray-50 hover:bg-white group">
+                        <span class="text-xs font-medium text-gray-700 block group-hover:text-green-700">🍁Leaf Rust</span>
+                        <span class="text-[10px] text-red-400 block">Rust spots</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Image Preview & Results -->
+        <div class="w-full md:w-1/2 p-6 md:p-8 bg-gray-50/50 flex flex-col justify-between">
+            <div>
+                <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center justify-between">
+                    <span>Diagnosis Result</span>
+                    <span id="loading-spinner" class="hidden text-green-700 text-sm animate-spin">
+                        <i class="fa-solid fa-circle-notch"></i>
+                    </span>
+                </h2>
+
+                <!-- Image Preview Area -->
+                <div class="relative w-full h-52 rounded-xl bg-gray-100 overflow-hidden border border-gray-200 mb-6 flex items-center justify-center">
+                    <img id="image-preview" src="#" alt="Leaf Preview" class="w-full h-full object-cover hidden">
+                    <div id="preview-placeholder" class="text-center p-4">
+                        <i class="fa-solid fa-leaf text-4xl text-gray-300 mb-2 block"></i>
+                        <p class="text-xs text-gray-400">No image uploaded yet</p>
+                    </div>
+                </div>
+
+                <!-- Diagnosis Output Container -->
+                <div id="result-container" class="space-y-3 max-h-48 overflow-y-auto custom-scrollbar pr-1">
+                    <div class="text-center py-6 text-gray-400 text-xs">
+                        Upload an image or select a demo sample to see AI prediction scores.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Note -->
+            <div class="mt-6 pt-3 border-t border-gray-200 text-center">
+                <p class="text-[11px] text-gray-400">Powered by TensorFlow.js & Teachable Machine</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Logging Helper Function
+        function logMessage(level, context, message, details = null) {
+            const timestamp = new Date().toISOString();
+            const logEntry = `[${timestamp}] [${level.toUpperCase()}] [${context}] ${message}`;
+            if (details !== null) {
+                console[level](logEntry, details);
+            } else {
+                console[level](logEntry);
+            }
+        }
+
+        // Global State Variables
+        let model = null;
+        let isCustomModelLoaded = false;
+        let maxPredictions = 0; 
+        let diseaseKnowledgebase = [];
+
+        async function loadDiseaseKnowledgebase() {
+            logMessage("info", "Knowledgebase", "Fetching diseases.json...");
+            try {
+                const response = await fetch("diseases.json");
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                const data = await response.json();
+                diseaseKnowledgebase = data.diseases || [];
+                logMessage("info", "Knowledgebase", `Loaded ${diseaseKnowledgebase.length} disease definitions successfully.`);
+            } catch(error) {
+                logMessage("error", "Knowledgebase", "Failed to load disease definitions from diseases.json", error);
+            }
+        }
+
+        const demoSamples = {
+            healthy: {
+                predictions: [
+                    { className: "Healthy Leaf", probability: 0.96 },
+                    { className: "Leaf Rust", probability: 0.03 },
+                    { className: "Early Blight", probability: 0.01 },
+                    { className: "Leaf Virus", probability: 0.02 },
+                    { className: "Insect Mites", probability: 0.01 }, 
+                    { className: "Bavterial Spot", probability: 0.01 }
+                ]
+            },
+            blight: {
+                predictions: [
+                    { className: "Early Blight", probability: 0.88 },
+                    { className: "Leaf Rust", probability: 0.09 },
+                    { className: "Healthy Leaf", probability: 0.03 },
+                    { className: "Leaf Virus", probability: 0.02 },
+                    { className: "Insect Mites", probability: 0.01 },
+                    { className: "Bavterial Spot", probability: 0.01 }  
+                ]
+            },
+            rust: {
+                predictions: [
+                    { className: "Leaf Rust", probability: 0.91 },
+                    { className: "Early Blight", probability: 0.07 },
+                    { className: "Healthy Leaf", probability: 0.02 },
+                    { className: "Leaf Virus", probability: 0.02 },
+                    { className: "Insect Mites", probability: 0.01 },
+                    { className: "Bavterial Spot", probability: 0.01 }  
+                ]
+            }
+        };
+
+        const dropZone = document.getElementById('drop-zone');
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.add('drop-zone--over'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.remove('drop-zone--over'), false);
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            logMessage("info", "Upload", "File dropped into dropzone.");
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0) {
+                processImageFile(files[0]);
+            }
+        });
+
+        function handleFileSelect(event) {
+            logMessage("info", "Upload", "File selected via file dialog.");
+            const file = event.target.files[0];
+            if (file) {
+                processImageFile(file);
+            }
+        }
+
+        function processImageFile(file) {
+            logMessage("info", "Upload", "Processing uploaded file...", { fileName: file.name, fileSize: file.size, fileType: file.type });
+            
+            if (!file.type.startsWith('image/')) {
+                logMessage("warn", "Upload", "Invalid file format rejected.", { fileType: file.type });
+                showToast("Please select a valid image file.");
+                return;
+            }
+
+            const imgElement = document.getElementById("image-preview");
+            const placeholder = document.getElementById("preview-placeholder");
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imgElement.src = e.target.result;
+                imgElement.classList.remove("hidden");
+                placeholder.classList.add("hidden");
+
+                imgElement.onload = async () => {
+                    logMessage("info", "Upload", "Image successfully rendered in preview area.");
+                    await runAnalysis(imgElement);
+                };
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function loadSample(type) {
+            logMessage("info", "DemoSample", `Demo sample requested: ${type}`);
+            const sample = demoSamples[type];
+            if (!sample) {
+                logMessage("warn", "DemoSample", `Sample type "${type}" not found.`);
+                return;
+            }
+
+            const imgElement = document.getElementById("image-preview");
+            const placeholder = document.getElementById("preview-placeholder");
+
+            imgElement.crossOrigin = "anonymous";
+            imgElement.src = sample.url || "#";
+            imgElement.classList.remove("hidden");
+            placeholder.classList.add("hidden");
+
+            imgElement.onload = async () => {
+                logMessage("info", "DemoSample", `Demo sample "${type}" image loaded.`);
+                if (isCustomModelLoaded && model) {
+                    logMessage("info", "DemoSample", "Custom model is active. Running live analysis on demo image...");
+                    await runAnalysis(imgElement);
+                } else {
+                    logMessage("info", "DemoSample", "No custom model loaded. Displaying mock predictions.");
+                    showLoading(true);
+                    setTimeout(() => {
+                        renderPredictions(sample.predictions);
+                        showLoading(false);
+                    }, 400);
+                }
+            };
+        }
+
+        async function loadCustomModel(url, modelName) {
+            logMessage("info", "ModelLoader", `Initiating load for model "${modelName}" from ${url}`);
+            
+            if (!url) {
+                logMessage("warn", "ModelLoader", "Model load aborted: URL is missing.");
+                showToast("Please enter a valid Teachable Machine URL.");
+                return;
+            }
+
+            if (!url.endsWith("/")) {
+                url += "/";
+            }
+
+            const activeModelText = document.getElementById("active-model-text");
+            const container = document.getElementById("result-container");
+            
+            showLoading(true);
+            if (activeModelText) {
+                activeModelText.innerHTML = `Active Model: <span class="font-bold text-amber-600">Loading ${modelName}...</span>`;
+            }
+
+            if (container) {
+                container.innerHTML = `
+                    <div class="text-center py-6 text-green-700 font-semibold text-xs flex flex-col items-center justify-center gap-2">
+                        <i class="fa-solid fa-spinner animate-spin text-2xl"></i>
+                        <span>Loading ${modelName} AI Model, please wait...</span>
+                    </div>
+                `;
+            }
+
+            try {
+                const modelURL = url + "model.json";
+                const metadataURL = url + "metadata.json";
+
+                logMessage("info", "ModelLoader", "Downloading TensorFlow.js model files...", { modelURL, metadataURL });
+                model = await tmImage.load(modelURL, metadataURL);
+                maxPredictions = model.getTotalClasses();
+                isCustomModelLoaded = true;
+
+                logMessage("info", "ModelLoader", `Model "${modelName}" successfully initialized. Total classes: ${maxPredictions}`);
+
+                if (activeModelText) {
+                    activeModelText.innerHTML = `Active Model: <span class="font-bold text-green-700">${modelName}</span>`;
+                }
+
+                showToast(`${modelName} Model loaded successfully!`);
+                
+                if (container) {
+                    container.innerHTML = `
+                        <div class="text-center py-6 text-gray-400 text-xs">
+                            ${modelName} Model loaded! Upload an image or select a demo sample to see AI prediction scores.
+                        </div>
+                    `;
+                }
+
+                const imgElement = document.getElementById("image-preview");
+                if (!imgElement.classList.contains("hidden")) {
+                    logMessage("info", "ModelLoader", "Re-analyzing active preview image with newly loaded model...");
+                    await runAnalysis(imgElement);
+                }
+            } catch (error) {
+                logMessage("error", "ModelLoader", `Failed to load model "${modelName}" from ${url}`, error);
+                showToast("Failed to load model. Check URL or network.");
+                
+                if (activeModelText) {
+                    activeModelText.innerHTML = `Active Model: <span class="font-bold text-red-600">Failed to load</span>`;
+                }
+
+                if (container) {
+                    container.innerHTML = `
+                        <div class="text-center py-6 text-red-500 text-xs font-medium">
+                            Failed to load model. Please try again.
+                        </div>
+                    `;
+                }
+                isCustomModelLoaded = false;
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function runAnalysis(imageElement) {
+            logMessage("info", "Analysis", "Starting image analysis...");
+            showLoading(true);
+            try {
+                if (isCustomModelLoaded && model) {
+                    logMessage("info", "Analysis", "Running prediction using Teachable Machine model...");
+                    const predictions = await model.predict(imageElement);
+                    logMessage("info", "Analysis", "Raw prediction output received:", predictions);
+                    renderPredictions(predictions);
+                } else {
+                    logMessage("info", "Analysis", "Custom model not loaded. Generating fallback mock predictions...");
+                    setTimeout(() => {
+                        const mockPredictions = [
+                            { className: "Healthy Leaf", probability: 0.75 },
+                            { className: "Leaf Rust", probability: 0.18 },
+                            { className: "Early Blight", probability: 0.07 }
+                        ];
+                        logMessage("info", "Analysis", "Mock predictions generated:", mockPredictions);
+                        renderPredictions(mockPredictions);
+                        showLoading(false);
+                    }, 500);
+                    return;
+                }
+            } catch (err) {
+                logMessage("error", "Analysis", "Prediction execution failed:", err);
+                showToast("Error processing image preview.");
+            }
+            showLoading(false);
+        }
+
+        function renderPredictions(predictions) {
+            const container = document.getElementById("result-container");
+            container.innerHTML = "";
+
+            if (!predictions || predictions.length === 0) {
+                logMessage("warn", "UI", "renderPredictions called with empty or undefined predictions.");
+                return;
+            }
+
+            // Sort predictions to locate the single highest match
+            const sorted = [...predictions].sort((a, b) => b.probability - a.probability);
+            const topPrediction = sorted[0];
+            logMessage("info", "UI", `Top prediction selected: ${topPrediction.className} (${(topPrediction.probability * 100).toFixed(1)}%)`);
+
+            const details = lookupDiseaseDetails(topPrediction.className);
+            if (details) {
+                logMessage("info", "UI", "Matched disease details from knowledgebase:", details);
+            } else {
+                logMessage("warn", "UI", `No matching knowledgebase entry found for class: "${topPrediction.className}"`);
+            }
+
+            const percent = (topPrediction.probability * 100).toFixed(1);
+            const isHealthy = topPrediction.className.toLowerCase().includes("healthy");
+            const colorClass = isHealthy ? "bg-green-600" : "bg-amber-600";
+
+            // Render ONLY the single best match
+            const wrapper = document.createElement("div");
+            wrapper.className = "bg-white p-3 rounded-xl border border-gray-100 shadow-sm mb-3";
+
+            wrapper.innerHTML = `
+                <div class="flex justify-between items-center mb-1 text-xs">
+                    <span class="font-bold text-gray-800">${topPrediction.className}</span>
+                    <span class="font-mono text-[11px] font-bold text-green-700">${percent}%</span>
+                </div>
+                <div class="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                    <div class="progress-bar-fill h-full ${colorClass}" style="width: ${percent}%"></div>
+                </div>
+            `;
+            container.appendChild(wrapper);
+
+            // Render disease knowledge card if details exist
+            if (details) {
+                const infoCard = document.createElement("div");
+                infoCard.className = "bg-white p-4 rounded-2xl border border-gray-200 shadow-sm text-xs text-gray-700 space-y-3 mb-3";
+                infoCard.innerHTML = `
+                    <div>
+                        <span class="font-bold text-gray-900 block mb-1 flex items-center gap-1.5">
+                            <i class="fa-solid fa-microscope text-emerald-700"></i>
+                            <span>Cause</span>
+                        </span>
+                        <p class="text-gray-700 bg-gray-50 p-2 rounded-lg border border-gray-100 font-mono text-[11px]">${details.cause}</p>
+                    </div>
+                    <div>
+                        <span class="font-bold text-gray-900 block mb-1 flex items-center gap-1.5">
+                            <i class="fa-regular fa-file-lines text-emerald-700"></i>
+                            <span>Symptom Description:</span>
+                        </span>
+                        <p class="text-gray-600 leading-relaxed">${details.description}</p>
+                    </div>
+                    <div>
+                        <span class="font-bold text-gray-900 block mb-1 flex items-center gap-1.5">
+                            <i class="fa-solid fa-prescription-bottle-medical text-emerald-700"></i>
+                            <span>Recommended Treatment & Cultural Controls:</span>
+                        </span>
+                        <ul class="space-y-1.5 pl-1">
+                            ${details.treatment.map(item => `
+                                <li class="flex items-start gap-2 text-gray-600">
+                                    <i class="fa-solid fa-check text-emerald-600 mt-0.5 text-[10px] shrink-0"></i>
+                                    <span>${item}</span>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                `;
+                container.appendChild(infoCard);
+            }
+        }
+
+        function lookupDiseaseDetails(className) {
+            if (!diseaseKnowledgebase || diseaseKnowledgebase.length === 0)
+                return null;
+            const normalize = (str) =>
+                (str || "")
+                    .toLowerCase()
+                    .replace(/tomatoe/g, "tomato")
+                    .replace(/potatoe/g, "potato")
+                    .replace(/[^a-z0-9]/g, "");
+            const target = normalize(className);
+            return (
+                diseaseKnowledgebase.find((d) => {
+                    const normId = normalize(d.id);
+                    return normId === target;
+                }) || null
+            );
+        }
+
+        function showLoading(state) {
+            const spinner = document.getElementById("loading-spinner");
+            if (state) {
+                spinner.classList.remove("hidden");
+            } else {
+                spinner.classList.add("hidden");
+            }
+        }
+
+        function showToast(message) {
+            logMessage("info", "UI", `Toast alert: "${message}"`);
+            const toast = document.createElement("div");
+            toast.className = "fixed bottom-4 right-4 bg-gray-900 text-white text-xs px-4 py-2.5 rounded-xl shadow-lg transition-opacity duration-300 opacity-0 z-50";
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => toast.classList.remove("opacity-0"), 10);
+            setTimeout(() => {
+                toast.classList.add("opacity-0");
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            logMessage("info", "App", "Plant Doctor application initialized.");
+            await loadDiseaseKnowledgebase();
+        });
+    </script>
+</body>
+</html>

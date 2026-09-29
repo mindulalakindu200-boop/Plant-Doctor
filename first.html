@@ -1,0 +1,1924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<!--
+╔══════════════════════════════════════════════════════════════════════╗
+║                    🌿 PLANT DOCTOR — README                         ║
+╠══════════════════════════════════════════════════════════════════════╣
+║ This is a single-file Plant Doctor website.                         ║
+║                                                                      ║
+║ BEGINNER MAP                                                        ║
+║                                                                      ║
+║ 1. HEAD / <style>                                                    ║
+║    Visual design: colors, spacing, buttons, cards, responsive rules. ║
+║                                                                      ║
+║ 2. BODY                                                              ║
+║    The things people see: intro, login, signup, app and profile.     ║
+║                                                                      ║
+║ 3. AUTH SCRIPT                                                       ║
+║    Login, signup, Google login, sessions and password changes.       ║
+║                                                                      ║
+║ 4. TURSO DATABASE                                                    ║
+║    The TURSO_URL and TURSO_TOKEN values connect the browser to DB.   ║
+║                                                                      ║
+║ 5. MEDIA CENTER                                                      ║
+║    Handles image/video selection and responsive previews.             ║
+║                                                                      ║
+║ 6. COMMENTS                                                          ║
+║    Handles the existing comment/status functionality.                ║
+║                                                                      ║
+║ IMPORTANT                                                            ║
+║ • Keep the existing element IDs. JavaScript uses them as connections.║
+║ • Keep local files such as gorge.png, Plant doctor AI.html and      ║
+║   offline plant doc.html beside this HTML file.                      ║
+║ • This version intentionally keeps the existing features intact.     ║
+╚══════════════════════════════════════════════════════════════════════╝
+-->
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+    <meta name="theme-color" content="#052e16">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="description" content="Plant Doctor — responsive AI plant and leaf diagnosis system">
+
+    <title>Plant Doctor — AI Leaf Diagnosis</title>
+
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+
+    <link rel="icon" href="gorge.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css">
+
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --green-900: #052e16;
+            --green-800: #14532d;
+            --green-700: #15803d;
+            --green-600: #16a34a;
+            --green-500: #22c55e;
+            --green-400: #4ade80;
+            --green-300: #86efac;
+            --green-100: #dcfce7;
+            --glass-bg: rgba(255,255,255,.08);
+            --glass-border: rgba(255,255,255,.15);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #020b05;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ============================================================
+           INTRO
+        ============================================================ */
+        #pd-intro {
+            position: fixed;
+            inset: 0;
+            z-index: 1000000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(34,197,94,.15) 0%, #020b05 70%);
+            transition: opacity .8s ease, visibility .8s ease;
+        }
+
+        #pd-intro.done { opacity: 0; visibility: hidden; pointer-events: none; }
+
+        .intro-ring {
+            position: absolute;
+            border-radius: 50%;
+            border: 1px solid rgba(74,222,128,.12);
+            animation: ringPulse 3s ease-in-out infinite;
+        }
+
+        .intro-ring:nth-child(1) { width: 300px; height: 300px; animation-delay: 0s; }
+        .intro-ring:nth-child(2) { width: 500px; height: 500px; animation-delay: .4s; opacity: .6; }
+        .intro-ring:nth-child(3) { width: 750px; height: 750px; animation-delay: .8s; opacity: .3; }
+
+        @keyframes ringPulse {
+            0%,100% { transform: scale(.95); opacity: .3; }
+            50%      { transform: scale(1.05); opacity: 1; }
+        }
+
+        .intro-glow {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(34,197,94,.18) 0%, transparent 70%);
+            filter: blur(40px);
+            animation: glowBreath 2.5s ease-in-out infinite;
+        }
+
+        @keyframes glowBreath {
+            0%,100% { transform: scale(.8); opacity: .6; }
+            50%      { transform: scale(1.2); opacity: 1; }
+        }
+
+        .intro-card {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            padding: 48px 40px 40px;
+            border: 1px solid rgba(74,222,128,.2);
+            border-radius: 32px;
+            background: rgba(5,20,10,.85);
+            backdrop-filter: blur(24px);
+            box-shadow:
+                0 0 0 1px rgba(74,222,128,.05) inset,
+                0 40px 100px rgba(0,0,0,.6),
+                0 0 80px rgba(34,197,94,.08);
+            animation: cardIn .8s cubic-bezier(.2,.8,.2,1) both;
+        }
+
+        @keyframes cardIn {
+            from { opacity: 0; transform: scale(.9) translateY(24px); }
+            to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .intro-logo {
+            width: 100px;
+            height: 100px;
+            object-fit: contain;
+            margin: 0 auto 24px;
+            filter: drop-shadow(0 0 20px rgba(74,222,128,.7));
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%,100% { transform: translateY(0); }
+            50%      { transform: translateY(-8px); }
+        }
+
+        .intro-title {
+            color: #f0fff4;
+            font-size: clamp(2.8rem, 8vw, 5.5rem);
+            font-weight: 900;
+            letter-spacing: -3px;
+            line-height: 1;
+            background: linear-gradient(135deg, #fff 30%, var(--green-300));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .intro-sub {
+            margin-top: 14px;
+            color: var(--green-400);
+            font-size: .75rem;
+            font-weight: 700;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+        }
+
+        .intro-bar {
+            width: 180px;
+            height: 2px;
+            margin: 24px auto 0;
+            border-radius: 99px;
+            background: linear-gradient(90deg, transparent, var(--green-400), transparent);
+            animation: barPulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes barPulse {
+            0%,100% { opacity: .4; transform: scaleX(.6); }
+            50%      { opacity: 1; transform: scaleX(1); }
+        }
+
+        /* ============================================================
+           LOGIN OVERLAY
+        ============================================================ */
+        #pd-auth-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: radial-gradient(ellipse 100% 80% at 50% 20%, rgba(34,197,94,.12) 0%, rgba(2,11,5,.97) 55%);
+            overflow-y: auto;
+        }
+
+        #pd-auth-card {
+            width: min(420px, 100%);
+            padding: 36px 32px 28px;
+            border: 1px solid rgba(74,222,128,.22);
+            border-radius: 28px;
+            background: rgba(6,22,11,.92);
+            backdrop-filter: blur(20px);
+            box-shadow:
+                0 0 0 1px rgba(74,222,128,.06) inset,
+                0 30px 80px rgba(0,0,0,.5),
+                0 0 60px rgba(34,197,94,.06);
+            animation: cardIn .5s cubic-bezier(.2,.8,.2,1) both;
+        }
+
+        /* Logo + heading */
+        .auth-logo {
+            width: 56px;
+            height: 56px;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto 18px;
+            filter: drop-shadow(0 0 12px rgba(74,222,128,.6));
+        }
+
+        .auth-title {
+            color: #fff;
+            font-size: 22px;
+            font-weight: 700;
+            text-align: center;
+            letter-spacing: -.3px;
+        }
+
+        .auth-sub {
+            margin-top: 6px;
+            color: rgba(255,255,255,.45);
+            font-size: 13px;
+            text-align: center;
+        }
+
+        /* Google button */
+        #pd-google-button {
+            display: flex;
+            justify-content: center;
+            margin: 22px 0 0;
+            min-height: 44px;
+            overflow: hidden;
+            border-radius: 12px;
+        }
+
+        /* Divider */
+        .auth-divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 18px 0;
+            color: rgba(255,255,255,.25);
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .auth-divider::before,
+        .auth-divider::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: rgba(255,255,255,.1);
+        }
+
+        /* Input group */
+        .input-group {
+            position: relative;
+            margin-bottom: 12px;
+        }
+
+        .input-group input {
+            width: 100%;
+            height: 48px;
+            padding: 0 16px 0 44px;
+            border: 1px solid rgba(255,255,255,.1);
+            border-radius: 14px;
+            background: rgba(255,255,255,.05);
+            color: #fff;
+            font: 14px/1 'Inter', sans-serif;
+            outline: none;
+            transition: border-color .2s, background .2s, box-shadow .2s;
+        }
+
+        .input-group input::placeholder { color: rgba(255,255,255,.3); }
+
+        .input-group input:focus {
+            border-color: rgba(74,222,128,.5);
+            background: rgba(74,222,128,.06);
+            box-shadow: 0 0 0 3px rgba(74,222,128,.1);
+        }
+
+        .input-group .icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255,255,255,.3);
+            font-size: 15px;
+            pointer-events: none;
+            transition: color .2s;
+        }
+
+        .input-group input:focus ~ .icon { color: var(--green-400); }
+
+        /* Human check */
+        .captcha-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 4px 0 16px;
+            padding: 12px 14px;
+            border: 1px solid rgba(255,255,255,.08);
+            border-radius: 12px;
+            background: rgba(255,255,255,.03);
+        }
+
+        .captcha-row input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--green-400);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .captcha-row label {
+            color: rgba(255,255,255,.55);
+            font-size: 12.5px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        /* Auth message */
+        #pd-auth-message {
+            min-height: 18px;
+            margin-bottom: 12px;
+            font-size: 12.5px;
+            text-align: center;
+            color: #fca5a5;
+            line-height: 1.5;
+        }
+
+        /* Primary button */
+        .btn-primary {
+            width: 100%;
+            height: 48px;
+            border: none;
+            border-radius: 14px;
+            background: linear-gradient(135deg, var(--green-700), var(--green-500));
+            color: #fff;
+            font: 600 15px/1 'Inter', sans-serif;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(34,197,94,.25);
+            transition: filter .2s, transform .15s, box-shadow .2s;
+        }
+
+        .btn-primary:hover {
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+            box-shadow: 0 12px 32px rgba(34,197,94,.35);
+        }
+
+        .btn-primary:active { transform: translateY(0); }
+
+        .btn-primary:disabled,
+        .btn-ghost:disabled {
+            opacity: .65;
+            cursor: wait;
+            transform: none;
+        }
+
+        .auth-status {
+            margin-top: 10px;
+            min-height: 16px;
+            text-align: center;
+            color: rgba(255,255,255,.35);
+            font-size: 11px;
+        }
+
+        /* Register link */
+        .btn-ghost {
+            display: block;
+            width: 100%;
+            margin-top: 12px;
+            border: 1px solid rgba(255,255,255,.1);
+            border-radius: 14px;
+            padding: 13px;
+            background: transparent;
+            color: rgba(255,255,255,.55);
+            font: 13px/1 'Inter', sans-serif;
+            cursor: pointer;
+            text-align: center;
+            transition: border-color .2s, color .2s, background .2s;
+        }
+
+        .btn-ghost span { color: var(--green-400); font-weight: 600; }
+        .btn-ghost:hover { border-color: rgba(74,222,128,.3); color: rgba(255,255,255,.8); background: rgba(74,222,128,.04); }
+
+        /* Security note */
+        .auth-note {
+            margin-top: 18px;
+            color: rgba(255,255,255,.2);
+            font-size: 10.5px;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        /* ============================================================
+           MAIN APP
+        ============================================================ */
+        #pd-app {
+            position: relative;
+            isolation: isolate;
+            display: none;
+            min-height: 100vh;
+            min-height: 100svh;
+            background: #c9f8c9;
+            padding: 28px 20px 60px;
+            overflow: hidden;
+        }
+
+        #pd-app::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: -2;
+            background:
+                linear-gradient(rgba(201,248,201,.30), rgba(201,248,201,.30)),
+                url("rart.png") center center / cover no-repeat;
+            transform: scale(1.02);
+        }
+
+        #pd-app::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background: radial-gradient(ellipse 75% 55% at 50% 0%, rgba(255,255,255,.30), transparent 65%);
+            pointer-events: none;
+        }
+
+        /* User chip */
+        .user-chip {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            z-index: 10000;
+        }
+
+        .user-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 14px 6px 6px;
+            border: 1px solid rgba(255,255,255,.6);
+            border-radius: 50px;
+            background: rgba(255,255,255,.85);
+            backdrop-filter: blur(16px);
+            cursor: pointer;
+            font-family: inherit;
+            box-shadow: 0 4px 20px rgba(0,0,0,.12);
+            transition: background .2s, box-shadow .2s;
+        }
+
+        .user-btn:hover { background: #fff; box-shadow: 0 6px 28px rgba(0,0,0,.16); }
+
+        .user-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--green-700), var(--green-400));
+            color: #fff;
+            font: 700 12px/1 'Inter', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+        .user-info { display: flex; flex-direction: column; gap: 2px; }
+        .user-name  { font: 600 13px/1 'Inter', sans-serif; color: #0f2418; }
+        .user-email { font: 400 10.5px/1 'Inter', sans-serif; color: #64748b; }
+
+        /* Profile panel */
+        .profile-panel {
+            display: none;
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            width: 288px;
+            padding: 20px;
+            border: 1px solid rgba(22,163,74,.2);
+            border-radius: 20px;
+            background: rgba(255,255,255,.97);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 20px 60px rgba(0,50,10,.15), 0 4px 16px rgba(0,0,0,.08);
+        }
+
+        .profile-panel.open { display: block; }
+
+        .profile-panel h3 { font-size: 15px; font-weight: 700; color: var(--green-800); margin-bottom: 4px; }
+        .profile-panel p  { font-size: 12px; color: #94a3b8; line-height: 1.5; margin-bottom: 16px; }
+
+        .profile-label {
+            display: block;
+            font-size: 10.5px;
+            font-weight: 700;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            margin-bottom: 4px;
+        }
+
+        .profile-input {
+            width: 100%;
+            height: 38px;
+            padding: 0 12px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            outline: none;
+            font: 14px/1 'Inter', sans-serif;
+            background: #f8fafc;
+            color: #0f172a;
+            margin-bottom: 10px;
+            transition: border-color .2s, box-shadow .2s;
+        }
+
+        .profile-input:focus { border-color: var(--green-500); box-shadow: 0 0 0 3px rgba(34,197,94,.1); background: #fff; }
+        .profile-input:disabled { background: #f1f5f9; color: #94a3b8; cursor: not-allowed; }
+
+        .profile-actions { display: flex; gap: 8px; margin-top: 2px; }
+
+        .profile-btn {
+            flex: 1;
+            height: 36px;
+            border: none;
+            border-radius: 10px;
+            font: 600 12.5px/1 'Inter', sans-serif;
+            cursor: pointer;
+            transition: filter .2s, transform .15s;
+        }
+
+        .profile-btn:hover { filter: brightness(1.06); transform: translateY(-1px); }
+        .profile-btn-primary { background: var(--green-700); color: #fff; }
+        .profile-btn-secondary { background: #f1f5f9; color: #374151; }
+
+        #pd-profile-message { min-height: 14px; margin-top: 10px; font-size: 12px; text-align: center; }
+
+        .profile-signout {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            width: 100%;
+            height: 36px;
+            margin-top: 12px;
+            border: 1.5px solid #fecaca;
+            border-radius: 10px;
+            background: #fff5f5;
+            color: #b91c1c;
+            font: 600 12.5px/1 'Inter', sans-serif;
+            cursor: pointer;
+            transition: background .2s;
+        }
+
+        .profile-signout:hover { background: #fee2e2; }
+
+        /* Content box */
+        .app-box {
+            width: min(880px, 100%);
+            margin: 72px auto 0;
+            padding: 36px;
+            border: 1px solid rgba(255,255,255,.7);
+            border-radius: 28px;
+            background: rgba(255,255,255,.9);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 20px 60px rgba(0,50,10,.15);
+        }
+
+        .box-title {
+            font-size: clamp(1.7rem, 4vw, 2.4rem);
+            font-weight: 900;
+            color: var(--green-900);
+            letter-spacing: -.04em;
+        }
+
+        .box-sub {
+            margin: 6px 0 26px;
+            color: #64748b;
+            font-size: .88rem;
+        }
+
+        /* Toggle buttons */
+        .toggle-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .toggle-grid a { text-decoration: none; display: block; }
+
+        .toggle-btn {
+            width: 100%;
+            min-height: 78px;
+            border: 0;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            font: 800 1rem/1 'Inter', sans-serif;
+            cursor: pointer;
+            transition: transform .2s, filter .2s, box-shadow .2s;
+        }
+
+        .toggle-btn:hover { transform: translateY(-3px); filter: brightness(1.04); }
+
+        .btn-online {
+            color: #fff;
+            background: linear-gradient(135deg, var(--green-700) 0%, var(--green-500) 100%);
+            box-shadow: 0 12px 28px rgba(22,163,74,.28);
+        }
+
+        .btn-offline {
+            color: #7f1d1d;
+            background: linear-gradient(135deg, #fef2f2, #fee2e2);
+            border: 1px solid #fecaca;
+            box-shadow: 0 8px 20px rgba(127,29,29,.08);
+        }
+
+        /* Comment section */
+        .comment-section {
+            margin-top: 32px;
+            padding-top: 28px;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .comment-section h3 {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--green-800);
+            margin-bottom: 16px;
+        }
+
+        .comment-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .comment-form input,
+        .comment-form textarea {
+            width: 100%;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 10px 14px;
+            outline: none;
+            font: 14px/1.4 'Inter', sans-serif;
+            background: #fff;
+            color: #0f172a;
+            transition: border-color .2s, box-shadow .2s;
+        }
+
+        .comment-form input:focus,
+        .comment-form textarea:focus {
+            border-color: var(--green-500);
+            box-shadow: 0 0 0 3px rgba(34,197,94,.1);
+        }
+
+        .comment-form textarea,
+        .comment-submit { grid-column: 1 / -1; }
+
+        .comment-submit {
+            height: 46px;
+            border: 0;
+            border-radius: 12px;
+            background: var(--green-700);
+            color: #fff;
+            font: 700 14px/1 'Inter', sans-serif;
+            cursor: pointer;
+            transition: filter .2s, transform .15s;
+        }
+
+        .comment-submit:hover { filter: brightness(1.08); transform: translateY(-1px); }
+
+        .comment-list { margin-top: 18px; max-height: 280px; overflow: auto; }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            #pd-app { padding: 20px 12px 40px; }
+            .app-box { margin-top: 64px; padding: 22px 18px; border-radius: 22px; }
+            .toggle-grid, .comment-form { grid-template-columns: 1fr; }
+            .comment-form textarea, .comment-submit { grid-column: auto; }
+            .user-info { display: none; }
+        }
+
+        @media (max-width: 480px) {
+            #pd-auth-card { padding: 28px 20px 22px; border-radius: 22px; }
+            .intro-card { padding: 36px 24px 32px; }
+        }
+
+        /* Strict auth / signup additions */
+        .auth-view {
+            display: block;
+        }
+
+        .auth-view.hidden {
+            display: none;
+        }
+
+        .auth-form-title {
+            margin: 4px 0 16px;
+            color: #fff;
+            font-size: 18px;
+            font-weight: 800;
+            text-align: center;
+        }
+
+        .auth-form-sub {
+            margin: -8px 0 16px;
+            color: rgba(255,255,255,.45);
+            font-size: 12px;
+            line-height: 1.5;
+            text-align: center;
+        }
+
+        .auth-back {
+            margin-top: 10px;
+        }
+
+        #pd-google-button.auth-locked {
+            pointer-events: none;
+            opacity: .42;
+            filter: grayscale(.3);
+        }
+
+        .captcha-row.lock-highlight {
+            border-color: rgba(74,222,128,.35);
+            box-shadow: 0 0 0 3px rgba(74,222,128,.06);
+        }
+
+        .profile-password-box {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .profile-password-title {
+            margin-bottom: 8px;
+            color: #14532d;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+    
+/* ================================================================
+   MEDIA CENTER — reliable preview + camera/file support
+================================================================ */
+.pd-media-card {
+    width: min(880px, 100%);
+    margin: 24px auto 0;
+    padding: clamp(16px, 3vw, 28px);
+    border: 1px solid rgba(22,163,74,.22);
+    border-radius: 24px;
+    background: rgba(255,255,255,.93);
+    backdrop-filter: blur(18px);
+    box-shadow: 0 18px 55px rgba(2,11,5,.12);
+}
+
+.pd-media-card h3 {
+    color: var(--green-800);
+    margin-bottom: 6px;
+    font-size: clamp(1.05rem, 2.4vw, 1.3rem);
+}
+
+.pd-media-card p {
+    color: #64748b;
+    margin-bottom: 14px;
+    font-size: .86rem;
+    line-height: 1.55;
+}
+
+.pd-device-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 11px;
+    margin-bottom: 14px;
+    border-radius: 999px;
+    background: rgba(34,197,94,.10);
+    color: #166534;
+    font-size: .72rem;
+    font-weight: 800;
+}
+
+.pd-media-upload {
+    display: grid;
+    gap: 10px;
+}
+
+.pd-media-file-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 52px;
+    padding: 12px 16px;
+    border: 2px dashed rgba(22,163,74,.38);
+    border-radius: 14px;
+    background: #f0fdf4;
+    color: #166534;
+    font-weight: 800;
+    cursor: pointer;
+    text-align: center;
+    transition: background .2s, border-color .2s, transform .15s;
+}
+
+.pd-media-file-label:hover {
+    background: #dcfce7;
+    border-color: rgba(22,163,74,.65);
+    transform: translateY(-1px);
+}
+
+#pd-media-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.pd-media-preview-wrap {
+    display: none;
+    margin-top: 6px;
+    overflow: hidden;
+    border-radius: 18px;
+    border: 1px solid rgba(22,163,74,.18);
+    background: #020b05;
+}
+
+.pd-media-preview-wrap.show {
+    display: block;
+}
+
+.pd-media-preview {
+    display: block;
+    width: 100%;
+    max-height: min(65vh, 620px);
+    object-fit: contain;
+    background: #020b05;
+}
+
+.pd-media-info {
+    display: none;
+    padding: 10px 12px;
+    background: rgba(255,255,255,.96);
+    color: #475569;
+    font-size: .75rem;
+    line-height: 1.45;
+}
+
+.pd-media-info.show {
+    display: block;
+}
+
+.pd-media-actions {
+    display: none;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.pd-media-actions.show {
+    display: grid;
+}
+
+.pd-media-action {
+    min-height: 44px;
+    border: 0;
+    border-radius: 12px;
+    cursor: pointer;
+    font: 700 13px/1 'Inter', sans-serif;
+}
+
+.pd-media-clear {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.pd-media-open {
+    background: #dcfce7;
+    color: #166534;
+}
+
+@media (max-width: 640px) {
+    #pd-app {
+        padding: 18px 12px 42px;
+    }
+
+    .pd-media-card {
+        border-radius: 20px;
+    }
+
+    .pd-media-actions {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+    .pd-media-preview {
+        max-height: 55vh;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: .001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .001ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+
+/* ================================================================
+   🌿 HUMAN-FRIENDLY UI
+   Clear labels, readable text and comfortable controls.
+================================================================ */
+.pd-human-helper {
+    margin: 8px 0 12px;
+    color: #64748b;
+    font-size: .78rem;
+    line-height: 1.5;
+}
+
+.pd-action-explanation {
+    margin-top: 8px;
+    color: #475569;
+    font-size: .78rem;
+    line-height: 1.5;
+}
+
+.pd-media-card input[type="file"]::file-selector-button {
+    border: 0;
+    border-radius: 9px;
+    padding: 8px 11px;
+    margin-right: 8px;
+    background: #dcfce7;
+    color: #166534;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+@media (max-width: 640px) {
+    .pd-human-helper,
+    .pd-action-explanation {
+        font-size: .8rem;
+    }
+}
+
+</style>
+</head>
+<body>
+
+<!-- ================================================================
+     INTRO
+================================================================ -->
+<div id="pd-intro">
+    <div class="intro-glow"></div>
+    <div class="intro-ring"></div>
+    <div class="intro-ring"></div>
+    <div class="intro-ring"></div>
+
+    <div class="intro-card">
+        <img src="gorge.png" class="intro-logo" alt="Plant Doctor">
+        <h1 class="intro-title">Plant Doctor</h1>
+        <p class="intro-sub">AI Leaf Diagnosis</p>
+        <div class="intro-bar"></div>
+    </div>
+</div>
+
+
+<!-- ================================================================
+     LOGIN
+================================================================ -->
+<div id="pd-auth-overlay">
+    <div id="pd-auth-card">
+
+        <img src="gorge.png" class="auth-logo" alt="Plant Doctor">
+
+        <!-- LOGIN VIEW -->
+        <div id="pd-login-view" class="auth-view">
+            <h2 class="auth-title">Welcome back</h2>
+            <p class="auth-sub">Sign in to your Plant Doctor account</p>
+
+            <div id="pd-google-button" class="auth-locked"></div>
+
+            <div class="auth-divider">or continue with email</div>
+
+            <div class="input-group">
+                <input id="pd-auth-email" type="email" placeholder="Email address" autocomplete="email">
+                <i class="fa-regular fa-envelope icon"></i>
+            </div>
+
+            <div class="input-group">
+                <input id="pd-auth-password" type="password" placeholder="Password" autocomplete="current-password">
+                <i class="fa-solid fa-lock icon"></i>
+            </div>
+
+            <div class="captcha-row lock-highlight">
+                <input type="checkbox" id="pd-human-check">
+                <label for="pd-human-check">I'm not a robot — unlock sign in</label>
+            </div>
+
+            <div id="pd-auth-message"></div>
+            <div id="pd-auth-status" class="auth-status"></div>
+
+            <button class="btn-primary" id="pd-email-login" disabled>Sign In</button>
+
+            <button class="btn-ghost" id="pd-register-btn" disabled>
+                No account? <span>Create one free</span>
+            </button>
+        </div>
+
+        <!-- MANUAL SIGNUP VIEW -->
+        <div id="pd-signup-view" class="auth-view hidden">
+            <h2 class="auth-title">Create account</h2>
+            <p class="auth-sub">Manual signup — all fields are required</p>
+
+            <div class="input-group">
+                <input id="pd-signup-email" type="email" placeholder="New email address" autocomplete="email">
+                <i class="fa-regular fa-envelope icon"></i>
+            </div>
+
+            <div class="input-group">
+                <input id="pd-signup-username" type="text" placeholder="Username" maxlength="80" autocomplete="username">
+                <i class="fa-regular fa-user icon"></i>
+            </div>
+
+            <div class="input-group">
+                <input id="pd-signup-password" type="password" placeholder="New password — minimum 8 characters" autocomplete="new-password">
+                <i class="fa-solid fa-lock icon"></i>
+            </div>
+
+            <div class="input-group">
+                <input id="pd-signup-confirm-password" type="password" placeholder="Confirm password" autocomplete="new-password">
+                <i class="fa-solid fa-shield-halved icon"></i>
+            </div>
+
+            <div class="captcha-row lock-highlight">
+                <input type="checkbox" id="pd-signup-human-check">
+                <label for="pd-signup-human-check">I'm not a robot — unlock account creation</label>
+            </div>
+
+            <div id="pd-signup-message" class="auth-status" style="color:#fca5a5;min-height:18px"></div>
+
+            <button class="btn-primary" id="pd-create-account" disabled>Create Account</button>
+            <button class="btn-ghost auth-back" id="pd-back-login">
+                Already have an account? <span>Back to sign in</span>
+            </button>
+        </div>
+
+        <p class="auth-note">
+            Protected by Google Sign-In &amp; Turso database.<br>
+            Add http://127.0.0.1:5500 to your Google OAuth authorized origins.
+        </p>
+    </div>
+</div>
+
+
+<!-- ================================================================
+     MAIN APP
+================================================================ -->
+<div id="pd-app">
+
+    <!-- User chip -->
+    <div class="user-chip" id="pd-user-area">
+        <button class="user-btn" id="pd-user-button" type="button" aria-expanded="false">
+            <span class="user-avatar" id="pd-user-avatar">U</span>
+            <span class="user-info">
+                <span class="user-name" id="pd-user-name">User</span>
+                <span class="user-email" id="pd-user-email">user@example.com</span>
+            </span>
+            <i class="fa-solid fa-chevron-down" style="font-size:.65rem;color:#94a3b8;margin-left:2px"></i>
+        </button>
+
+        <div class="profile-panel" id="pd-profile-panel">
+            <h3>Account</h3>
+            <p>Manage your Plant Doctor profile.</p>
+
+            <label class="profile-label" for="pd-profile-name">Display name</label>
+            <input class="profile-input" id="pd-profile-name" type="text" maxlength="80">
+
+            <label class="profile-label" for="pd-profile-email">Email</label>
+            <input class="profile-input" id="pd-profile-email" type="email" disabled>
+
+            <div class="profile-password-box">
+                <div class="profile-password-title">Change password</div>
+
+                <label class="profile-label" for="pd-current-password">Current password</label>
+                <input class="profile-input" id="pd-current-password" type="password"
+                       placeholder="Enter your current password" autocomplete="current-password">
+
+                <label class="profile-label" for="pd-new-password">New password</label>
+                <input class="profile-input" id="pd-new-password" type="password"
+                       placeholder="At least 8 characters" autocomplete="new-password">
+
+                <label class="profile-label" for="pd-confirm-new-password">Confirm new password</label>
+                <input class="profile-input" id="pd-confirm-new-password" type="password"
+                       placeholder="Re-enter new password" autocomplete="new-password">
+            </div>
+
+            <div class="profile-actions">
+                <button class="profile-btn profile-btn-primary" id="pd-save-profile" type="button">Save name</button>
+                <button class="profile-btn profile-btn-secondary" id="pd-change-password" type="button">Change password</button>
+            </div>
+
+            <div id="pd-profile-message"></div>
+
+            <button class="profile-signout" id="pd-logout" type="button">
+                <i class="fa-solid fa-right-from-bracket"></i> Sign out
+            </button>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="app-box">
+        <h1 class="box-title">System Status</h1>
+        <p class="box-sub">Toggle diagnostic engine connectivity</p>
+
+        <div class="toggle-grid">
+            <a href="Plant doctor AI.html">
+                <button class="toggle-btn btn-online">
+                    <span style="font-size:1.2rem">🟢</span>
+                    <span>Go Online</span>
+                </button>
+            </a>
+            <a href="offline plant doc.html">
+                <button class="toggle-btn btn-offline">
+                    <span style="font-size:1.2rem">🔴</span>
+                    <span>Go Offline</span>
+                </button>
+            </a>
+        </div>
+
+        <div class="comment-section">
+            <h3>Leave a Comment</h3>
+            <form id="comment-form" class="comment-form">
+                <input type="text" id="comment-username" placeholder="Username" required>
+                <input type="email" id="comment-email" placeholder="Email" required>
+                <textarea id="comment-text" placeholder="Your comment…" rows="3" required></textarea>
+                <button type="submit" class="comment-submit">Post Comment ✉️</button>
+            </form>
+            <div id="comment-list" class="comment-list"></div>
+        </div>
+    </div>
+
+
+        <!-- =========================================================
+             📷 MEDIA CENTER — beginner-friendly upload/preview area
+             =========================================================
+             Works with images/video from any device.
+        ========================================================== -->
+        <section class="pd-media-card" id="pd-media-center" aria-label="Plant media center">
+            <h3>🌿 Plant Photo & Video</h3>
+            <p>Choose a plant image or video from your phone, tablet, laptop, or desktop. On supported phones, the camera can open directly.</p>
+
+            <span class="pd-device-badge" id="pd-device-badge">🖥️ Detecting device…</span>
+
+            <div class="pd-media-upload">
+                <label class="pd-media-file-label" for="pd-media-input">
+                    📷 Choose plant photo / video
+                </label>
+
+                <input
+                    id="pd-media-input"
+                    type="file"
+                    accept="image/*,video/*"
+                    capture="environment"
+                    aria-label="Choose a plant photo or video"
+                >
+
+                <div class="pd-media-preview-wrap" id="pd-media-preview-wrap">
+                    <img id="pd-media-image-preview" class="pd-media-preview" alt="Selected plant image preview">
+                    <video id="pd-media-video-preview" class="pd-media-preview" controls playsinline preload="metadata"></video>
+                    <div class="pd-media-info" id="pd-media-info"></div>
+                </div>
+
+                <div class="pd-media-actions" id="pd-media-actions">
+                    <button type="button" class="pd-media-action pd-media-open" id="pd-media-open">Open full size</button>
+                    <button type="button" class="pd-media-action pd-media-clear" id="pd-media-clear">Remove preview</button>
+                </div>
+            </div>
+        </section>
+
+</div>
+
+
+<!-- ================================================================
+     SCRIPTS
+================================================================ -->
+<script>
+/* -- Intro gate -- */
+(() => {
+    const intro   = document.getElementById("pd-intro");
+    const overlay = document.getElementById("pd-auth-overlay");
+    const app     = document.getElementById("pd-app");
+
+    overlay.style.display = "none";
+    app.style.display     = "none";
+    document.body.style.overflow = "hidden";
+    window.__pdIntroFinished = false;
+
+    setTimeout(() => {
+        window.__pdIntroFinished = true;
+        intro.classList.add("done");
+        document.body.style.overflow = "";
+
+        if (typeof window.__pdAuthGate === "function") window.__pdAuthGate();
+    }, 3200);
+})();
+</script>
+
+<script>
+/*
+   ================================================================
+   🔐 AUTHENTICATION
+   ---------------------------------------------------------------
+   This section handles:
+   • Manual email/password login
+   • New account creation
+   • Google Sign-In
+   • Human/robot checkbox gate
+   • Saved login session
+   • Profile name
+   • Password changes
+
+   Beginner tip:
+   Most page features connect to JavaScript through an element ID,
+   for example document.getElementById("pd-email-login").
+   ================================================================
+   AUTH
+================================================================ */
+
+const TURSO_URL        = "https://idk-soysa-dt.aws-ap-south-1.turso.io/v2/pipeline";
+const TURSO_TOKEN      = "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJnaWQiOiIxMTliZWIwNy02NmE5LTRiYzYtYjNmMi03YzNiNGI5ODg3YjAiLCJpYXQiOjE3ODk2NjQzOTksImtpZCI6IlNkc0Rrb0lMY25NTkhfTDlLbjJ4cXRlaElZeElvMTR4N2dwZ2s0aW16MFUiLCJyaWQiOiIzMzAzNDY3Zi05YjhlLTQ3NDItYTVmNi03MjJlZWQ4MzI3NzkifQ.F0040FypMAmZbc04-lQsEQPS5A9CNLCD5TJJXEIxgpvpWWe36gMJQ4vTt-UPlB6V0O0fZCBsHDmOC_4Z8BkiDg";
+const GOOGLE_CLIENT_ID = "59709282073-tbgo6dq3p1fplmvk83p7455e1g71godr.apps.googleusercontent.com";
+
+const overlay     = document.getElementById("pd-auth-overlay");
+const app         = document.getElementById("pd-app");
+const authMsg     = document.getElementById("pd-auth-message");
+const humanCheck       = document.getElementById("pd-human-check");
+const signupHumanCheck = document.getElementById("pd-signup-human-check");
+
+let currentUser = null;
+
+/* ---- Turso ---- */
+function formatTursoError(error) {
+    if (error == null) return "Unknown database error.";
+    if (typeof error === "string") return error;
+    if (error instanceof Error && error.message) return error.message;
+
+    if (typeof error === "object") {
+        const candidates = [
+            error.message,
+            error.error,
+            error.detail,
+            error.msg,
+            error.cause?.message,
+            error.response?.message,
+            error.response?.error
+        ];
+
+        for (const value of candidates) {
+            if (typeof value === "string" && value.trim()) return value;
+            if (value && typeof value === "object") {
+                const nested = formatTursoError(value);
+                if (nested && nested !== "[object Object]") return nested;
+            }
+        }
+
+        try { return JSON.stringify(error); }
+        catch (_) { return String(error); }
+    }
+
+    return String(error);
+}
+
+async function turso(sql, args = []) {
+    const res = await fetch(TURSO_URL, {
+        method: "POST",
+        headers: {
+            "Authorization": `Bearer ${TURSO_TOKEN}`,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            requests: [
+                {
+                    type: "execute",
+                    stmt: {
+                        sql,
+                        args: args.map(v => ({ type: "text", value: String(v) }))
+                    }
+                },
+                { type: "close" }
+            ]
+        })
+    });
+
+    let data;
+    try {
+        data = await res.json();
+    } catch (_) {
+        throw new Error(`Turso returned invalid JSON (HTTP ${res.status}).`);
+    }
+
+    if (!res.ok) {
+        throw new Error(formatTursoError(data?.error || data?.message || data) || `HTTP ${res.status}`);
+    }
+
+    const firstResult = data?.results?.[0];
+
+    if (firstResult?.error) {
+        throw new Error(formatTursoError(firstResult.error));
+    }
+
+    if (firstResult?.response?.error) {
+        throw new Error(formatTursoError(firstResult.response.error));
+    }
+
+    const result = firstResult?.response?.result;
+    if (!result) {
+        throw new Error(formatTursoError(data) || "Turso returned an unexpected response.");
+    }
+
+    return result;
+}
+
+function rowToObj(result, row) {
+    const obj = {};
+    result.cols.forEach((c, i) => { obj[c.name] = row[i]?.value ?? row[i] ?? null; });
+    return obj;
+}
+
+async function findUser(email) {
+    const result = await turso("SELECT * FROM users WHERE email = ? LIMIT 1;", [email.toLowerCase()]);
+    if (!result || !result.rows.length) return null;
+    return rowToObj(result, result.rows[0]);
+}
+
+/* ---- UI ---- */
+function showLogin() {
+    overlay.style.display = "flex";
+    app.style.display = "none";
+    document.body.style.overflow = "hidden";
+
+    if (typeof showLoginView === "function") showLoginView();
+    if (humanCheck) {
+        humanCheck.checked = false;
+        updateAuthLocks();
+    }
+}
+
+function showApp(user) {
+    currentUser = user;
+    fillProfile(user);
+    overlay.style.display = "none";
+    app.style.display = "block";
+    document.body.style.overflow = "";
+}
+
+function checkHuman() {
+    if (!humanCheck.checked) {
+        setMsg("Please check the 'I'm not a robot' box first.", "error");
+        return false;
+    }
+    return true;
+}
+
+function updateAuthLocks() {
+    const unlocked = !!humanCheck.checked;
+    document.getElementById("pd-email-login").disabled = !unlocked;
+    document.getElementById("pd-register-btn").disabled = !unlocked;
+
+    const googleBox = document.getElementById("pd-google-button");
+    if (googleBox) googleBox.classList.toggle("auth-locked", !unlocked);
+}
+
+function updateSignupLock() {
+    document.getElementById("pd-create-account").disabled = !signupHumanCheck.checked;
+}
+
+humanCheck.addEventListener("change", updateAuthLocks);
+signupHumanCheck.addEventListener("change", updateSignupLock);
+
+function setAuthBusy(busy, label = "") {
+    const loginBtn = document.getElementById("pd-email-login");
+    const registerBtn = document.getElementById("pd-register-btn");
+    const status = document.getElementById("pd-auth-status");
+
+    loginBtn.disabled = busy || !humanCheck.checked;
+    registerBtn.disabled = busy || !humanCheck.checked;
+    status.textContent = busy ? label : "";
+}
+
+function setMsg(text, type = "error") {
+    authMsg.style.color = type === "error" ? "#fca5a5" : "#86efac";
+    authMsg.textContent = text;
+}
+
+function userNameStorageKey(email) {
+    return "pdDisplayName:" + String(email || "").trim().toLowerCase();
+}
+
+function saveLocalDisplayName(email, name) {
+    try {
+        localStorage.setItem(userNameStorageKey(email), name);
+    } catch (_) {}
+}
+
+function getLocalDisplayName(email) {
+    try {
+        return localStorage.getItem(userNameStorageKey(email)) || "";
+    } catch (_) {
+        return "";
+    }
+}
+
+function isGoogleDbPassword(password) {
+    return typeof password === "string" && password.startsWith("google_");
+}
+
+function initials(name, email) {
+    const v = (name || email || "U").trim().split(/\s+/).filter(Boolean);
+    return (v.length > 1 ? v[0][0] + v[1][0] : v[0][0]).toUpperCase();
+}
+
+function fillProfile(user) {
+    const name = user.username || user.name || getLocalDisplayName(user.email) || user.email.split("@")[0];
+    document.getElementById("pd-user-name").textContent  = name;
+    document.getElementById("pd-user-email").textContent = user.email;
+    document.getElementById("pd-profile-name").value     = name;
+    document.getElementById("pd-profile-email").value    = user.email;
+
+    const av = document.getElementById("pd-user-avatar");
+    if (user.picture) {
+        av.innerHTML = "";
+        const img = document.createElement("img");
+        img.src = user.picture;
+        img.alt = name;
+        av.appendChild(img);
+    } else {
+        av.textContent = initials(name, user.email);
+    }
+
+    const cu = document.getElementById("comment-username");
+    const ce = document.getElementById("comment-email");
+    if (cu) cu.value = name;
+    if (ce) ce.value = user.email;
+}
+
+function saveSession(user) {
+    try { localStorage.setItem("pdUser", JSON.stringify(user)); } catch (_) {}
+    if (window.__pdIntroFinished) {
+        showApp(user);
+    } else {
+        window.__pdPendingUser = user;
+    }
+}
+
+/* ---- Manual signup ---- */
+const loginView = document.getElementById("pd-login-view");
+const signupView = document.getElementById("pd-signup-view");
+const signupMsg = document.getElementById("pd-signup-message");
+
+function showSignupView() {
+    if (!checkHuman()) return;
+    authMsg.textContent = "";
+    signupMsg.textContent = "";
+    loginView.classList.add("hidden");
+    signupView.classList.remove("hidden");
+    signupHumanCheck.checked = false;
+    updateSignupLock();
+
+    const currentEmail = document.getElementById("pd-auth-email").value.trim();
+    if (currentEmail) document.getElementById("pd-signup-email").value = currentEmail;
+}
+
+function showLoginView() {
+    signupView.classList.add("hidden");
+    loginView.classList.remove("hidden");
+    signupMsg.textContent = "";
+}
+
+document.getElementById("pd-register-btn").addEventListener("click", showSignupView);
+document.getElementById("pd-back-login").addEventListener("click", showLoginView);
+
+document.getElementById("pd-create-account").addEventListener("click", async () => {
+    signupMsg.style.color = "#fca5a5";
+    signupMsg.textContent = "";
+
+    if (!signupHumanCheck.checked) {
+        signupMsg.textContent = "Please complete the 'I'm not a robot' check first.";
+        return;
+    }
+
+    const email = document.getElementById("pd-signup-email").value.trim().toLowerCase();
+    const username = document.getElementById("pd-signup-username").value.trim();
+    const pass = document.getElementById("pd-signup-password").value;
+    const confirmPass = document.getElementById("pd-signup-confirm-password").value;
+    const createBtn = document.getElementById("pd-create-account");
+
+    if (!email || !email.includes("@")) {
+        signupMsg.textContent = "Enter a valid new email address.";
+        return;
+    }
+
+    if (username.length < 3) {
+        signupMsg.textContent = "Username must be at least 3 characters.";
+        return;
+    }
+
+    if (pass.length < 8) {
+        signupMsg.textContent = "Password must be at least 8 characters.";
+        return;
+    }
+
+    if (pass !== confirmPass) {
+        signupMsg.textContent = "Passwords do not match.";
+        return;
+    }
+
+    try {
+        createBtn.disabled = true;
+        createBtn.textContent = "Creating…";
+
+        if (await findUser(email)) {
+            signupMsg.textContent = "That email is already registered.";
+            return;
+        }
+
+        await turso("INSERT INTO users (email, password) VALUES (?, ?);", [email, pass]);
+        saveLocalDisplayName(email, username);
+
+        signupMsg.style.color = "#86efac";
+        signupMsg.textContent = "Account created! Logging you in…";
+        saveSession({ username, email, picture: "", authProvider: "manual" });
+
+    } catch (e) {
+        console.error(e);
+        signupMsg.textContent = "Signup failed: " + formatTursoError(e);
+    } finally {
+        createBtn.textContent = "Create Account";
+        createBtn.disabled = !signupHumanCheck.checked;
+    }
+});
+
+/* ---- Email login ---- */
+document.getElementById("pd-email-login").addEventListener("click", async () => {
+    authMsg.textContent = "";
+    if (!checkHuman()) return;
+
+    const email = document.getElementById("pd-auth-email").value.trim().toLowerCase();
+    const pass  = document.getElementById("pd-auth-password").value;
+
+    if (!email || !pass) { setMsg("Enter your email and password."); return; }
+
+    try {
+        setAuthBusy(true, "Signing you in…");
+        const user = await findUser(email);
+        if (!user || String(user.password) !== pass) { setMsg("Wrong email or password."); return; }
+        saveSession({ username: getLocalDisplayName(user.email) || user.username || email.split("@")[0], email: user.email, picture: user.picture || "", authProvider: isGoogleDbPassword(String(user.password || "")) ? "google" : "manual" });
+    } catch (e) {
+        console.error(e);
+        setMsg("Login failed: " + formatTursoError(e));
+    } finally {
+        setAuthBusy(false);
+    }
+});
+
+/* ---- Google Sign-In ----
+   NOTE: You MUST add http://127.0.0.1:5500 to your Google Cloud Console
+   → APIs & Services → Credentials → OAuth 2.0 Client → Authorized JavaScript origins.
+   Without that the button will refuse to load (403 / origin not allowed).
+*/
+window.handleCredentialResponse = async function(response) {
+    authMsg.textContent = "";
+    if (!humanCheck.checked) {
+        setMsg("Please check the 'I'm not a robot' box before using Google Sign-In.");
+        return;
+    }
+    try {
+        const base64 = response.credential.split(".")[1]
+            .replace(/-/g, "+")
+            .replace(/_/g, "/");
+        const padded = base64 + "=".repeat((4 - base64.length % 4) % 4);
+        const bytes = atob(padded);
+        const payload = JSON.parse(
+            new TextDecoder().decode(
+                Uint8Array.from(bytes, c => c.charCodeAt(0))
+            )
+        );
+
+        const { email, name, picture, sub } = payload;
+        if (!email) throw new Error("Google did not share an email.");
+
+        let user = await findUser(email);
+        if (!user) {
+            await turso("INSERT INTO users (email, password) VALUES (?, ?);",
+                [email, "google_" + sub]);
+        }
+
+        const googleName = name || getLocalDisplayName(email) || (user && user.username) || email.split("@")[0];
+        saveLocalDisplayName(email, googleName);
+        saveSession({ username: googleName, email, picture: picture || "", authProvider: "google" });
+
+    } catch (e) {
+        console.error("Google login failed:", e);
+        setMsg("Google sign-in error: " + formatTursoError(e));
+    }
+};
+
+function initGoogleButton() {
+    if (!window.google?.accounts?.id) return false;
+    try {
+        google.accounts.id.initialize({
+            client_id: GOOGLE_CLIENT_ID,
+            callback: window.handleCredentialResponse,
+            use_fedcm_for_prompt: false
+        });
+        const el = document.getElementById("pd-google-button");
+        if (el && !el.dataset.ready) {
+            google.accounts.id.renderButton(el, {
+                theme: "outline", size: "large", shape: "rectangular",
+                text: "continue_with", width: 340
+            });
+            el.dataset.ready = "true";
+        }
+        return true;
+    } catch (e) {
+        console.warn("Google init:", e);
+        return false;
+    }
+}
+
+/* ---- Auth gate ---- */
+window.__pdAuthGate = function() {
+    if (window.__pdPendingUser) {
+        const u = window.__pdPendingUser;
+        window.__pdPendingUser = null;
+        showApp(u);
+        return;
+    }
+    try {
+        const s = localStorage.getItem("pdUser");
+        if (s) { showApp(JSON.parse(s)); return; }
+    } catch (_) {}
+    showLogin();
+};
+
+window.addEventListener("load", () => {
+    updateAuthLocks();
+    updateSignupLock();
+
+    let tries = 0;
+    const t = setInterval(() => {
+        tries++;
+        if (initGoogleButton() || tries >= 30) clearInterval(t);
+    }, 100);
+
+    if (window.__pdIntroFinished) window.__pdAuthGate();
+});
+
+/* ---- Profile dropdown ---- */
+const userBtn      = document.getElementById("pd-user-button");
+const profilePanel = document.getElementById("pd-profile-panel");
+
+userBtn.addEventListener("click", e => {
+    e.stopPropagation();
+    const open = profilePanel.classList.toggle("open");
+    userBtn.setAttribute("aria-expanded", open);
+});
+
+profilePanel.addEventListener("click", e => e.stopPropagation());
+document.addEventListener("click", () => profilePanel.classList.remove("open"));
+
+/* ---- Save name ---- */
+document.getElementById("pd-save-profile").addEventListener("click", async () => {
+    const msg  = document.getElementById("pd-profile-message");
+    const name = document.getElementById("pd-profile-name").value.trim();
+    if (!name) { msg.style.color = "#dc2626"; msg.textContent = "Enter a name."; return; }
+    try {
+        currentUser.username = name;
+        saveLocalDisplayName(currentUser.email, name);
+        saveSession(currentUser);
+        msg.style.color = "#16a34a"; msg.textContent = "Saved.";
+    } catch (e) { msg.style.color = "#dc2626"; msg.textContent = formatTursoError(e); }
+});
+
+/* ---- Change password ---- */
+document.getElementById("pd-change-password").addEventListener("click", async () => {
+    const msg = document.getElementById("pd-profile-message");
+    const currentPass = document.getElementById("pd-current-password").value;
+    const newPass = document.getElementById("pd-new-password").value;
+    const confirmNewPass = document.getElementById("pd-confirm-new-password").value;
+
+    msg.style.color = "#dc2626";
+    msg.textContent = "";
+
+    if (!currentPass) {
+        msg.textContent = "Enter your current password first.";
+        return;
+    }
+
+    if (newPass.length < 8) {
+        msg.textContent = "New password must be at least 8 characters.";
+        return;
+    }
+
+    if (newPass !== confirmNewPass) {
+        msg.textContent = "New passwords do not match.";
+        return;
+    }
+
+    if (currentPass === newPass) {
+        msg.textContent = "New password must be different from your current password.";
+        return;
+    }
+
+    try {
+        const dbUser = await findUser(currentUser.email);
+
+        if (!dbUser) {
+            msg.textContent = "Account record was not found.";
+            return;
+        }
+
+        if (isGoogleDbPassword(String(dbUser.password || ""))) {
+            msg.textContent = "This is a Google account. Password changes are only available for manual-login accounts.";
+            return;
+        }
+
+        if (String(dbUser.password) !== currentPass) {
+            msg.textContent = "Current password is incorrect.";
+            return;
+        }
+
+        await turso("UPDATE users SET password = ? WHERE email = ?;", [newPass, currentUser.email]);
+
+        document.getElementById("pd-current-password").value = "";
+        document.getElementById("pd-new-password").value = "";
+        document.getElementById("pd-confirm-new-password").value = "";
+
+        msg.style.color = "#16a34a";
+        msg.textContent = "Password updated successfully.";
+    } catch (e) {
+        msg.style.color = "#dc2626";
+        msg.textContent = formatTursoError(e);
+    }
+});
+
+/* ---- Logout ---- */
+document.getElementById("pd-logout").addEventListener("click", () => {
+    try { localStorage.removeItem("pdUser"); } catch (_) {}
+    currentUser = null;
+    humanCheck.checked = false;
+    signupHumanCheck.checked = false;
+    updateAuthLocks();
+    updateSignupLock();
+    profilePanel.classList.remove("open");
+    authMsg.textContent = "";
+    showLogin();
+});
+</script>
+
+
+<script>
+/*
+   ================================================================
+   📷 RESPONSIVE MEDIA CENTER
+   ---------------------------------------------------------------
+   This section handles:
+   • Device-size detection
+   • Image uploads
+   • Video uploads
+   • Mobile camera capture when supported
+   • Responsive previews
+   ================================================================
+   RESPONSIVE MEDIA CENTER
+================================================================ */
+(() => {
+    const input = document.getElementById("pd-media-input");
+    const image = document.getElementById("pd-media-image-preview");
+    const video = document.getElementById("pd-media-video-preview");
+    const badge = document.getElementById("pd-device-badge");
+
+    if (!input) return;
+
+    function deviceLabel() {
+        const w = window.innerWidth;
+        if (w <= 600) return "📱 Mobile";
+        if (w <= 1024) return "📲 Tablet";
+        if (w <= 1440) return "💻 Laptop";
+        return "🖥️ Desktop / Large screen";
+    }
+
+    function updateDevice() {
+        if (badge) badge.textContent = deviceLabel() + " • " + window.innerWidth + "×" + window.innerHeight;
+    }
+
+    function clearPreview() {
+        image.style.display = "none";
+        video.style.display = "none";
+        image.removeAttribute("src");
+        video.pause();
+        video.removeAttribute("src");
+        video.load();
+    }
+
+    input.addEventListener("change", () => {
+        const file = input.files && input.files[0];
+        clearPreview();
+        if (!file) return;
+
+        const url = URL.createObjectURL(file);
+
+        if (file.type.startsWith("image/")) {
+            image.src = url;
+            image.style.display = "block";
+            image.onload = () => URL.revokeObjectURL(url);
+        } else if (file.type.startsWith("video/")) {
+            video.src = url;
+            video.style.display = "block";
+            video.onloadeddata = () => {};
+        }
+    });
+
+    window.addEventListener("resize", updateDevice, {passive:true});
+    updateDevice();
+})();
+</script>
+
+
+<script>
+/* ================================================================
+   🧰 FRIENDLY ERROR HELPER
+   Shows a readable message in the browser console while keeping
+   the existing application behavior unchanged.
+================================================================ */
+window.addEventListener("error", function (event) {
+    console.error(
+        "Plant Doctor found a problem:",
+        event.error || event.message
+    );
+});
+
+window.addEventListener("unhandledrejection", function (event) {
+    console.error(
+        "Plant Doctor found a background problem:",
+        event.reason
+    );
+});
+</script>
+
+</body>
+
+<!--
+══════════════════════════════════════════════════════════════════════
+🌱 QUICK BEGINNER EDIT GUIDE
+
+Want to change the look?
+→ Search for: :root
+→ Change the green variables there.
+
+Want to change login wording?
+→ Search for: Welcome back / Sign in
+
+Want to change the Online / Offline buttons?
+→ Search for: Go Online / Go Offline
+
+Want to change the media area?
+→ Search for: pd-media-center
+
+Want to change the device rules?
+→ Search for: @media
+
+Want to change database settings?
+→ Search for: TURSO_URL / TURSO_TOKEN
+
+Want to change Google login?
+→ Search for: GOOGLE_CLIENT_ID
+
+IMPORTANT:
+Do not rename existing IDs unless you also update the JavaScript that
+uses them. IDs are the "wires" connecting the HTML to the scripts.
+
+This file keeps the existing application features and adds readability
+through comments, organization and clearer user-facing guidance.
+══════════════════════════════════════════════════════════════════════
+-->
+
+</html>
